@@ -10,20 +10,20 @@
 %% External API
 
 start(Options) ->
-   case global:whereis_name(ecomet_router) of
-       undefined ->
-           ecomet_router:start_link()
-   end,
+ %% case global:whereis_name(ecomet_router) of
+ %%     undefined ->
+ %%         ecomet_router:start_link()
+ %% end,
 
-   case global:whereis_name(ecomet_subsmanager) of
-       undefined ->
-           ecomet_subsmanager:start_link()
-   end,
+ %% case global:whereis_name(ecomet_subsmanager) of
+ %%     undefined ->
+ %%         ecomet_subsmanager:start_link()
+ %% end,
 
-   case global:whereis_name(ecomet_offline) of
-       undefined ->
-           ecomet_offline:start_link()
-   end,
+ %% case global:whereis_name(ecomet_offline) of
+ %%     undefined ->
+ %%         ecomet_offline:start_link()
+ %% end,
 
     {DocRoot, Options1} = get_option(docroot, Options),
     {ClusterNodes, Options2} = get_option(cluster_nodes, Options1),

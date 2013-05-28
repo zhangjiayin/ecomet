@@ -1,0 +1,9 @@
+%% -*- erlang -*-
+{application, ecomet_router,
+ [{description, "ecomet router"},
+  {vsn, "0.1"},
+  {modules, []},
+  {registered, []},
+  {mod, {'ecomet_router_app', []}},
+  {env, []},
+  {applications, [kernel, stdlib]}]}.

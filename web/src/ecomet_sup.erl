@@ -50,7 +50,7 @@ init([]) ->
 web_specs(Mod, Port) ->
     WebConfig = [{ip, {0,0,0,0}},
                  {port, Port},
-                 {cluster_nodes, ['n2@localhost', 'n1@localhost']},
+                 {cluster_nodes, ['erouter@localhost','n2@localhost', 'n1@localhost']},
                  {docroot, ecomet_deps:local_path(["priv", "www"])}],
     {Mod,
      {Mod, start, [WebConfig]},
