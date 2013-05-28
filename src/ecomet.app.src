@@ -1,0 +1,9 @@
+%% -*- erlang -*-
+{application, ecomet,
+ [{description, "ecomet"},
+  {vsn, "0.1"},
+  {modules, []},
+  {registered, []},
+  {mod, {'ecomet_app', []}},
+  {env, []},
+  {applications, [kernel, stdlib, crypto]}]}.
