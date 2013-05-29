@@ -16,7 +16,18 @@ start() ->
     start_link().
 
 start_link() ->
-    gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
+    %%gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
+    global:trans({?MODULE, ?MODULE}, fun() ->
+                case gen_server:start_link({global, ?MODULE}, ?MODULE, [], []) of
+                    {ok, Pid} -> 
+                        {ok, Pid};
+                    {error, {already_started, Pid}} ->  
+                        link(Pid), 
+                        {ok, Pid};
+                    Else -> Else
+                end     
+        end).
+
 %%   global:trans({?SERVER, ?SERVER},
 %%       fun() ->
 %%               case global:whereis_name(?MODULE) of
