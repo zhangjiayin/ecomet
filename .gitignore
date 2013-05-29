@@ -1,0 +1,6 @@
+
+*.beam
+
+web/ebin
+web/deps
+router/ebin
