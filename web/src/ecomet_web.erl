@@ -10,21 +10,6 @@
 %% External API
 
 start(Options) ->
- %% case global:whereis_name(ecomet_router) of
- %%     undefined ->
- %%         ecomet_router:start_link()
- %% end,
-
- %% case global:whereis_name(ecomet_subsmanager) of
- %%     undefined ->
- %%         ecomet_subsmanager:start_link()
- %% end,
-
- %% case global:whereis_name(ecomet_offline) of
- %%     undefined ->
- %%         ecomet_offline:start_link()
- %% end,
-
     {DocRoot, Options1} = get_option(docroot, Options),
     {ClusterNodes, Options2} = get_option(cluster_nodes, Options1),
     lists:foreach(fun(X)->net_adm:ping(X) end, ClusterNodes),
@@ -42,14 +27,16 @@ loop(Req, DocRoot) ->
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
                 case Path of
-                    "test/" ++ Id ->
+                    "ecomet/" ++ Id ->
                         Response = Req:ok({"text/html; charset=utf-8",
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
                         % login using an integer rather than a string
-                        {IdInt, _} = string:to_integer(Id),
-                        ecomet_router:login(IdInt, self(),true),
-                        proc_lib:hibernate(?MODULE, feed, [Response, IdInt, 1]);
+                       %% {IdInt, _} = string:to_integer(Id),
+                       %% ecomet_router:login(IdInt, self(),true),
+                      %%  proc_lib:hibernate(?MODULE, feed, [Response, IdInt, 1]);
+                        ecomet_router:login(Id, self(),true),
+                        proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     _ ->
                         Req:serve_file(Path, DocRoot)
                 end;
