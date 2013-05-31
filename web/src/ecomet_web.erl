@@ -6,7 +6,11 @@
 -module(ecomet_web).
 -author("zhangjiayin <zhangjiayin99@gmail.com>").
 
--export([start/1, stop/0, loop/2, feed/3]).
+-export([start/1, stop/0, loop/2, feed/3, loop/1]).
+
+-export([ resume/2 ]).
+-define(LOOP, {?MODULE, loop}).
+-define(WAITTIME, 30000).
 %% External API
 
 start(Options) ->
@@ -31,12 +35,14 @@ loop(Req, DocRoot) ->
                         Response = Req:ok({"text/html; charset=utf-8",
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
-                        % login using an integer rather than a string
-                       %% {IdInt, _} = string:to_integer(Id),
-                       %% ecomet_router:login(IdInt, self(),true),
-                      %%  proc_lib:hibernate(?MODULE, feed, [Response, IdInt, 1]);
                         ecomet_router:login(Id, self(),true),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
+                    "longpoll/" ++ Id      ->
+                        ecomet_router:login(Id, self(),true),
+                        error_logger:error_report(["loop/2"]),
+                        Reentry = mochiweb_http:reentry(?LOOP),
+                        proc_lib:hibernate(?MODULE, resume, [Req, Reentry]),
+                        io:format("not gonna happen~n", []);
                     _ ->
                         Req:serve_file(Path, DocRoot)
                 end;
@@ -89,3 +95,36 @@ you_should_write_a_test() ->
     ok.
 
 -endif.
+
+
+loop(Req) ->
+    Path = Req:get(path),
+    error_logger:error_report(["loop/1"]),
+    case string:tokens(Path, "/") of
+        ["longpoll"] ->
+            Reentry = mochiweb_http:reentry(?LOOP),
+            proc_lib:hibernate(?MODULE, resume, [Req, Reentry]);
+        _ ->
+            ok(Req, io_lib:format("some other page: ~p", [Path]))
+    end,
+
+    io:format("restarting loop normally in ~p~n", [Path]),
+    ok.
+
+resume(Req, Reentry) ->
+    error_logger:error_report(["resume/2"]),
+    receive
+        Msg ->
+            Text = io_lib:format("wake up message: ~p~nrest of path: ~p", [Msg, self()]),
+            ok(Req, Text)
+    after  ?WAITTIME ->
+        ok
+    end,
+
+    io:format("reentering loop via continuation in ~p~n", [Req:get(path)]),
+    Reentry(Req).
+
+ok(Req, Response) ->
+    Req:ok({_ContentType = "text/plain",
+            _Headers = [],
+            Response}).
