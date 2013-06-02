@@ -72,12 +72,13 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 first_run() ->
-    mnesia:create_schema([node()|nodes()]),
-    ok = mnesia:start(),
     Ret = mnesia:create_table(?TABLE_OFFLINE,
-    [{disc_copies, [node()|nodes()]},
+        [
+       %% {disc_copies, [node()|nodes()]},
+       {ram_copies, [node()|nodes()]},
+      %% {ramp_copies, [node()]},
      {attributes, record_info(fields, offline_msg)},
-    %% {index, [id]}, %index subscribee too
+     %%{index, [id]}, %index subscribee too
      {type, bag}
     ]),
     Ret.

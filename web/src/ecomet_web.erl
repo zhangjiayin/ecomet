@@ -35,10 +35,10 @@ loop(Req, DocRoot) ->
                         Response = Req:ok({"text/html; charset=utf-8",
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
-                        ecomet_router:login(Id, self(),true),
+                        gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id      ->
-                        ecomet_router:login(Id, self(),true),
+                        gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
                         error_logger:error_report(["loop/2"]),
                         Reentry = mochiweb_http:reentry(?LOOP),
                         proc_lib:hibernate(?MODULE, resume, [Req, Reentry]),
@@ -96,20 +96,43 @@ you_should_write_a_test() ->
 
 -endif.
 
-
 loop(Req) ->
-    Path = Req:get(path),
-    error_logger:error_report(["loop/1"]),
-    case string:tokens(Path, "/") of
-        ["longpoll"] ->
-            Reentry = mochiweb_http:reentry(?LOOP),
-            proc_lib:hibernate(?MODULE, resume, [Req, Reentry]);
-        _ ->
-            ok(Req, io_lib:format("some other page: ~p", [Path]))
-    end,
+    "/" ++ Path = Req:get(path),
+    try
+        case Req:get(method) of
+            Method when Method =:= 'GET'; Method =:= 'HEAD' ->
+                case Path of
+                    %%"ecomet/" ++ Id ->
+                    %%  Req:not_found();
+                    "longpoll/" ++ Id      ->
+                        Reentry = mochiweb_http:reentry(?LOOP),
+                        erlang:send_after(?WAITTIME, self(), "ping"),
+                        error_logger:error_report(["loop/1"]),
+                        error_logger:error_report([Id]),
+                        proc_lib:hibernate(?MODULE, resume, [Req, Reentry]);
+                    _ ->
+                        Req:not_found()
+                end;
+            'POST' ->
+                case Path of
+                    _ ->
+                        Req:not_found()
+                end;
+            _ ->
+                Req:respond({501, [], []})
+        end
+    catch
+        Type:What ->
+            Report = ["web request failed",
+                      {path, Path},
+                      {type, Type}, {what, What},
+                      {trace, erlang:get_stacktrace()}],
+            error_logger:error_report(Report),
+            %% NOTE: mustache templates need \ because they are not awesome.
+            Req:respond({500, [{"Content-Type", "text/plain"}],
+                         "request failed, sorry\n"})
+    end.
 
-    io:format("restarting loop normally in ~p~n", [Path]),
-    ok.
 
 resume(Req, Reentry) ->
     error_logger:error_report(["resume/2"]),

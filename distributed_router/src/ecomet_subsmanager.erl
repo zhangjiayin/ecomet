@@ -22,7 +22,6 @@ start_link() ->
                         ok
                 end
         end).
-    %%gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
 
 stop() ->
     gen_server:call(?SERVER, {stop}).
@@ -88,11 +87,12 @@ code_change(_OldVersion, State, _Extra) ->
 %%
 
 first_run() ->
-    mnesia:create_schema([node()|nodes()]),
-    ok = mnesia:start(),
     Ret = mnesia:create_table(subscription,
     [
-     {disc_copies, [node()]},
+     %%{disc_copies, [node()]},
+     {ram_copies, [node()|nodes()]},
+   %%  {ramp_copies, [node()]},
+     %%{disc_copies, [node()|nodes()]},
      {attributes, record_info(fields, subscription)},
      {index, [subscribee]}, %index subscribee too
      {type, bag}
