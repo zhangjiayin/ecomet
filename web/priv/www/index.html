@@ -1,8 +1,32 @@
 <html>
-<head>
-<title></title>
-</head>
-<body>
-ecomet running.
-</body>
+    <head>
+        <title></title>
+        <script src="/jquery-2.0.2.js"></script>
+    </head>
+    <body>
+        ecomet running.
+        <div id="message">
+        </div>
+        <script>
+            $(function()
+            {
+                function longPoll()
+                {
+                        $.ajax({
+                            url: "/longpoll/12345?" + new Date(),
+                            data: {},
+                            success: function(data){ 
+                                var html = data + "<br />"+ $("#message").html();
+                                $("#message").html(html)
+
+                                longPoll();
+                            }
+                        });
+                }
+                longPoll();
+            });
+
+
+        </script>
+    </body>
 </html>

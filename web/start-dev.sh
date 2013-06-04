@@ -5,6 +5,7 @@ exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
     -setcookie abc \
     -mnesia dir '"/Users/zhangjiayin/dev/OpensourceSoftware/mochiweb/mnesia"' \
     -K true \
+    --hidden \
     -P 134217727 \
     -s ecomet \
     -s reloader
