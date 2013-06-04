@@ -6,10 +6,10 @@ exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
     -mnesia dir '"/Users/zhangjiayin/dev/OpensourceSoftware/mochiweb/mnesia2"' \
     -K true \
     -P 134217727 \
-    -config erouter2.config  \
     -s mnesia start   \
     -s ecomet_router_app 
     -s reloader
+#    -config erouter2.config  \
    #-sname ecomet_dev \
    #-s ecomet \
    #-s reloader

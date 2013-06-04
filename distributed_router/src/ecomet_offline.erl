@@ -11,19 +11,21 @@
 -record(state, {}). % state is all in mnesia
 -record(offline_msg, {id,msg}).
 
--define(SERVER, global:whereis_name(?MODULE)).
+%%-define(SERVER, global:whereis_name(?MODULE)).
+-define(SERVER, ?MODULE).
 -define(TABLE_OFFLINE, offline_msg).
 
 start_link() ->
-    global:trans({?SERVER, ?SERVER},
-        fun() ->
-                case global:whereis_name(?MODULE) of
-                    undefined ->
-                        gen_server:start_link({global, ?MODULE}, ?MODULE, [], []);
-                    _ ->
-                        ok
-                end
-        end).
+    case gen_server:start_link({local,?SERVER},?MODULE, [], []) of
+        {ok, Pid} -> 
+%%             pg2:create(ecomet_offline),
+%%             pg2:join(ecomet_offline, Pid),
+            {ok, Pid};
+        {error, {already_started, Pid}} ->  
+            link(Pid), 
+            {ok, Pid};
+        Else -> Else
+    end.
 
 % sends Msg to anyone logged in as Id
 store(Id, Msg) ->
@@ -75,7 +77,7 @@ first_run() ->
     Ret = mnesia:create_table(?TABLE_OFFLINE,
         [
        %% {disc_copies, [node()|nodes()]},
-       {ram_copies, [node()|nodes()]},
+       %%{ramp_copies, [node()|nodes()]},
       %% {ramp_copies, [node()]},
      {attributes, record_info(fields, offline_msg)},
      %%{index, [id]}, %index subscribee too

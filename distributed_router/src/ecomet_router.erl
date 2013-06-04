@@ -7,7 +7,7 @@
 
 -export([send/2,send/3,publish/2,publish/3,login/2,login/3, logout/1]).
 
--define(SERVER, global:whereis_name(?MODULE)).
+-define(SERVER, ?MODULE).
 
 -define(TABLE_PIDS,online_pids).
 -define(TABLE_IDS, online_ids).
@@ -22,37 +22,37 @@ start() ->
     start_link().
 
 start_link() ->
-    global:trans({?MODULE, ?MODULE}, fun() ->
-                case gen_server:start_link({global, ?MODULE}, ?MODULE, [], []) of
-                    {ok, Pid} -> 
-                        {ok, Pid};
-                    {error, {already_started, Pid}} ->  
-                        link(Pid), 
-                        {ok, Pid};
-                    Else -> Else
-                end     
-        end).
+    case gen_server:start_link({local, ?SERVER},?MODULE, [], []) of
+        {ok, Pid} -> 
+             pg2:create(erouter),
+             pg2:join(erouter, Pid),
+            {ok, Pid};
+        {error, {already_started, Pid}} ->  
+            link(Pid), 
+            {ok, Pid};
+        Else -> Else
+    end.
 
 
 send(Id, Msg) ->
-    gen_server:call(?SERVER, {send, Id, Msg}).
+    gen_server:call(?MODULE, {send, Id, Msg}).
 send(Id, Msg,Offline) ->
-    gen_server:call(?SERVER, {send, Id, Msg, Offline}).
+    gen_server:call(?MODULE, {send, Id, Msg, Offline}).
 
 publish(Id, Msg) ->
-    gen_server:call(?SERVER, {publish, Id, Msg}).
+    gen_server:call(?MODULE, {publish, Id, Msg}).
 publish(Id, Msg,Offline) ->
-    gen_server:call(?SERVER, {publish, Id, Msg, Offline}).
+    gen_server:call(?MODULE, {publish, Id, Msg, Offline}).
 
 login(Id, Pid) when is_pid(Pid) ->
-    gen_server:call(?SERVER, {login, Id, Pid}).
+    gen_server:call(?MODULE, {login, Id, Pid}).
 
 login(Id, Pid, Offline) when is_pid(Pid) ->
-    gen_server:call(?SERVER, {login, Id, Pid, Offline}).
+    gen_server:call(?MODULE, {login, Id, Pid, Offline}).
 
 
 logout(Pid) when is_pid(Pid) ->
-    gen_server:call(?SERVER, {logout, Pid}).
+    gen_server:call(?MODULE, {logout, Pid}).
 
 %%
 
@@ -112,12 +112,29 @@ send_call (Id,Msg,Offline) ->
             end,
             ok;
         _ ->
-            [Pid ! M || {online_ids,_,Pid} <- Pids] % invert tuples
+            %%when PID is keepalive bug not logout there is a bug
+            case length(Pids) of
+                1  ->
+                    try 
+                        [Pid ! M || {online_ids,_,Pid} <- Pids]
+                    catch
+                        exit: {badarg, {To, Message}} ->
+                            case Offline of
+                                true ->
+                                    io:format("offline sotre"),
+                                    ecomet_offline:store(Id, Msg)
+                            end,
+                            io:format("catch: exit: {badarg,{~w, ~w}}~n", [To, Message])
+                    end;
+                _ ->
+                    [Pid ! M || {online_ids,_,Pid} <- Pids] % invert tuples
+            end
     end.
 
 publish_call (Id,Msg,Offline, From,State)->
     F = fun() ->
             Users = ecomet_subsmanager:get_subscribers(Id),
+            %%Users = gen_server:call(pg2:get_closest_pid(ecomet_subsmanager),{get_subscribers,Id}),
             [ send_call(User,Msg, Offline) || User <- Users ],
             gen_server:reply(From, {ok, length(Users)})
     end,
@@ -138,11 +155,9 @@ handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
         [] ->
             ok;
         _ ->
-            io:format("pidrows~w~n",[PidRows]),
             IdRows = [ {I,P} || {online_pids,P,I} <- PidRows ], % invert tuples
-            io:format("idrows~w~n",[IdRows]),
             mnesia:dirty_delete({?TABLE_PIDS,Pid}),
-            [ mnesia:dirty_delete(?TABLE_IDS,Obj) || Obj <- IdRows ]
+            [mnesia:dirty_delete_object(#online_ids{online_id=_Id, pid=Pid1}) || {_Id, Pid1}<- IdRows ]
     end,
     io:format("pid ~w logged out\n",[Pid]),
     {reply, ok, State};
@@ -167,7 +182,8 @@ handle_call({send, Id, Msg}, _From, State) ->
 % handle death and cleanup of logged in processes
 handle_info(Info, State) ->
     case Info of
-        {'EXIT', Pid, _Why} ->
+        {'EXIT', Pid, Why} ->
+            io:format("Why exit ~w~n", [ Why]),
             % force logout:
             handle_call({logout, Pid}, blah, State); 
         Wtf ->
@@ -185,9 +201,11 @@ code_change(_OldVsn, State, _Extra) ->
 first_run()->
    mnesia:create_schema([node()|nodes()]),
    ok = mnesia:start(),
-  R1= ecomet_offline:first_run(),
+   R1= ecomet_offline:first_run(),
+  %%R1 = gen_server:call(pg2:get_closest_pid(ecomet_offline),{first_run}),
   error_logger:info_msg(R1),
   R2 = ecomet_subsmanager:first_run(),
+  %%R2 = gen_server:call(pg2:get_closest_pid(ecomet_subsmanager),{first_run}),
   error_logger:info_msg(R2),
 
   R3=mnesia:create_table(?TABLE_PIDS, [

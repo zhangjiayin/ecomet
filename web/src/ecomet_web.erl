@@ -16,6 +16,7 @@
 start(Options) ->
     {DocRoot, Options1} = get_option(docroot, Options),
     {ClusterNodes, Options2} = get_option(cluster_nodes, Options1),
+    pg2:start_link(),
     lists:foreach(fun(X)->net_adm:ping(X) end, ClusterNodes),
     Loop = fun (Req) ->
                    ?MODULE:loop(Req, DocRoot)
@@ -35,10 +36,11 @@ loop(Req, DocRoot) ->
                         Response = Req:ok({"text/html; charset=utf-8",
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
-                        gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
+                        %%gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
+                        gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id      ->
-                        gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
+                        gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
                         error_logger:error_report(["loop/2"]),
                         Reentry = mochiweb_http:reentry(?LOOP),
                         proc_lib:hibernate(?MODULE, resume, [Req, Reentry]),
@@ -72,7 +74,8 @@ feed(Response,Id,N) ->
     {router_msg, Msg} ->
         Html = io_lib:format("Recvd msg #~w: '~s'", [N, Msg]),
         Response:write_chunk(Html);
-    _ ->
+    Msg1 ->
+        io:format("Msg1 ~w",[Msg1]),
         ok
     after 1000 ->
             ok

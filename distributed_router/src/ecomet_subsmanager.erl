@@ -10,32 +10,31 @@
          start_link/0]).
 -record(subscription, {subscriber, subscribee}).
 -record(state, {}). % state is all in mnesia
--define(SERVER, global:whereis_name(?MODULE)).
+-define(SERVER, ?MODULE).
 
 start_link() ->
-    global:trans({?SERVER, ?SERVER},
-        fun() ->
-                case global:whereis_name(?MODULE) of
-                    undefined ->
-                        gen_server:start_link({global, ?MODULE}, ?MODULE, [], []);
-                    _ ->
-                        ok
-                end
-        end).
+    case gen_server:start_link({local, ?SERVER},?MODULE, [], []) of
+        {ok, Pid} -> 
+            {ok, Pid};
+        {error, {already_started, Pid}} ->  
+            link(Pid), 
+            {ok, Pid};
+        Else -> Else
+    end.
+
 
 stop() ->
-    gen_server:call(?SERVER, {stop}).
+    gen_server:call(?MODULE, {stop}).
 
 add_subscriptions(SubsList) ->
-    gen_server:call(?SERVER, {add_subscriptions, SubsList}, infinity).
+    gen_server:call(?MODULE, {add_subscriptions, SubsList}, infinity).
 
 remove_subscriptions(SubsList) ->
-    gen_server:call(?SERVER, {remove_subscriptions, SubsList}, infinity).
+    gen_server:call(?MODULE, {remove_subscriptions, SubsList}, infinity).
 
 get_subscribers(User) ->
-    gen_server:call(?SERVER, {get_subscribers, User}).
+    gen_server:call(?MODULE, {get_subscribers, User}).
 
-%%
 
 init([]) ->
     ok = mnesia:start(),
