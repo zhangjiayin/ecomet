@@ -13,6 +13,7 @@
 
 %%%%% EXTERNAL INTERFACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start() ->
+    net_adm:ping('erouter@localhost'),
     start_link().
 
 start_link() ->
