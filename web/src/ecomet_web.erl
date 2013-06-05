@@ -8,7 +8,7 @@
 
 -export([start/1, stop/0, loop/2, feed/3, loop/1]).
 
--export([ resume/2 ]).
+-export([ resume/3]).
 -define(LOOP, {?MODULE, loop}).
 -define(WAITTIME, 30000).
 %% External API
@@ -18,6 +18,7 @@ start(Options) ->
     {ClusterNodes, Options2} = get_option(cluster_nodes, Options1),
     pg2:start_link(),
     lists:foreach(fun(X)->net_adm:ping(X) end, ClusterNodes),
+    process_flag(trap_exit,true),
     Loop = fun (Req) ->
                    ?MODULE:loop(Req, DocRoot)
            end,
@@ -27,6 +28,7 @@ stop() ->
     mochiweb_http:stop(?MODULE).
 
 loop(Req, DocRoot) ->
+    process_flag(trap_exit, true),
     "/" ++ Path = Req:get(path),
     try
         case Req:get(method) of
@@ -37,13 +39,15 @@ loop(Req, DocRoot) ->
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
                         %%gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
+                        erlang:send_after(?WAITTIME, self(), "ping"),
                         gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id      ->
                         gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
+                        erlang:send_after(?WAITTIME, self(), "ping"),
                         error_logger:error_report(["loop/2"]),
                         Reentry = mochiweb_http:reentry(?LOOP),
-                        proc_lib:hibernate(?MODULE, resume, [Req, Reentry]),
+                        proc_lib:hibernate(?MODULE, resume, [Req,Id, Reentry]),
                         io:format("not gonna happen~n", []);
                     _ ->
                         Req:serve_file(Path, DocRoot)
@@ -100,19 +104,18 @@ you_should_write_a_test() ->
 -endif.
 
 loop(Req) ->
+    %%process_flag(trap_exit, true),
     "/" ++ Path = Req:get(path),
     try
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
                 case Path of
-                    %%"ecomet/" ++ Id ->
-                    %%  Req:not_found();
                     "longpoll/" ++ Id      ->
                         Reentry = mochiweb_http:reentry(?LOOP),
                         erlang:send_after(?WAITTIME, self(), "ping"),
                         error_logger:error_report(["loop/1"]),
                         error_logger:error_report([Id]),
-                        proc_lib:hibernate(?MODULE, resume, [Req, Reentry]);
+                        proc_lib:hibernate(?MODULE, resume, [Req, Id, Reentry]);
                     _ ->
                         Req:not_found()
                 end;
@@ -137,11 +140,17 @@ loop(Req) ->
     end.
 
 
-resume(Req, Reentry) ->
-    error_logger:error_report(["resume/2"]),
+resume(Req, Id, Reentry) ->
+    error_logger:error_report(["resume/3"]),
     receive
+        {router_msg, Msg} ->
+            ok(Req, Msg);
+        {'EXIT',_Pid,noconnection} ->
+            gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
+            ok;
         Msg ->
-            Text = io_lib:format("wake up message: ~p~nrest of path: ~p", [Msg, self()]),
+            Text = io_lib:format("message: ~p  Pid: ~p", [Msg, self()]),
+            io:format("~w", [Msg]),
             ok(Req, Text)
     after  ?WAITTIME ->
         ok

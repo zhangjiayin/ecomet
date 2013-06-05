@@ -8,3 +8,7 @@ router/ebin
 distributed_router/erl_crash.dump
 
 *.dump
+
+ecomet_thrift_server/deps/jsx/
+
+ecomet_thrift_server/deps/thrift/
