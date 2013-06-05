@@ -7,7 +7,7 @@ exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
     -K true \
     -P 134217727 \
     -s mnesia start  \
-    -s ecomet_router_app \
+    -s ecomet_router_app 
    # -s reloader
  #   -config erouter.config \
    # -s reloader

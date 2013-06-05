@@ -112,23 +112,7 @@ send_call (Id,Msg,Offline) ->
             end,
             ok;
         _ ->
-            %%when PID is keepalive bug not logout there is a bug
-            case length(Pids) of
-                1  ->
-                    try 
-                        [Pid ! M || {online_ids,_,Pid} <- Pids]
-                    catch
-                        exit: {badarg, {To, Message}} ->
-                            case Offline of
-                                true ->
-                                    io:format("offline sotre"),
-                                    ecomet_offline:store(Id, Msg)
-                            end,
-                            io:format("catch: exit: {badarg,{~w, ~w}}~n", [To, Message])
-                    end;
-                _ ->
-                    [Pid ! M || {online_ids,_,Pid} <- Pids] % invert tuples
-            end
+            [Pid ! M || {online_ids,_,Pid} <- Pids]
     end.
 
 publish_call (Id,Msg,Offline, From,State)->
