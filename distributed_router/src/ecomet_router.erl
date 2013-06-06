@@ -1,11 +1,12 @@
 -module(ecomet_router).
 -behaviour(gen_server).
 
+-include_lib("stdlib/include/qlc.hrl").
 -export([start_link/0, start/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3, first_run/0]).
 
--export([send/2,send/3,publish/2,publish/3,login/2,login/3, logout/1]).
+-export([send/2,send/3,publish/2,publish/3,login/2,login/3, logout/1, get_online_count/0, get_online_ids/0]).
 
 -define(SERVER, ?MODULE).
 
@@ -23,16 +24,35 @@ start() ->
 
 start_link() ->
     case gen_server:start_link({local, ?SERVER},?MODULE, [], []) of
-        {ok, Pid} -> 
+        {ok, Pid} ->
              pg2:create(erouter),
              pg2:join(erouter, Pid),
             {ok, Pid};
-        {error, {already_started, Pid}} ->  
-            link(Pid), 
+        {error, {already_started, Pid}} ->
+            link(Pid),
             {ok, Pid};
         Else -> Else
     end.
 
+get_all_online_ids()->
+    F = fun() ->
+            qlc:e(qlc:q([X||X<-mnesia:table(?TABLE_IDS)]))
+    end,
+    case mnesia:transaction(F) of
+        {atomic,L} ->
+            %%R=L;
+            R=[ Id ||{online_ids, Id,_Pid }<- L];
+        _   ->
+            R = []
+    end,
+    Set = sets:from_list(R),
+    sets:to_list(Set).
+
+get_online_count() ->
+    gen_server:call(?MODULE, {get_online_count}).
+
+get_online_ids() ->
+    gen_server:call(?MODULE, {get_online_ids}).
 
 send(Id, Msg) ->
     gen_server:call(?MODULE, {send, Id, Msg}).
@@ -70,7 +90,7 @@ init([]) ->
     {ok, #state{} }.
 
 
-login_call(Id,Pid,Offline) when is_pid(Pid) -> 
+login_call(Id,Pid,Offline) when is_pid(Pid) ->
     Online_pids = #online_pids{online_pid=Pid,id=Id},
     Online_ids = #online_ids{online_id=Id, pid=Pid},
     mnesia:dirty_write(Online_ids),
@@ -78,7 +98,7 @@ login_call(Id,Pid,Offline) when is_pid(Pid) ->
     link(Pid), % tell us if they exit, so we can log them out
     io:format("~w logged in as ~w\n",[Pid, Id]),
     io:format("Offline ~w\n",[Offline]),
-    case Offline of 
+    case Offline of
         true ->
             Msgs = ecomet_offline:get_msg(Id),
             io:format("Msgs ~w\n",[Msgs]),
@@ -112,6 +132,7 @@ send_call (Id,Msg,Offline) ->
             end,
             ok;
         _ ->
+            io:format("~w",[Pids]),
             [Pid ! M || {online_ids,_,Pid} <- Pids]
     end.
 
@@ -124,6 +145,15 @@ publish_call (Id,Msg,Offline, From,State)->
     end,
     spawn(F),
     {noreply, State}.
+
+
+handle_call({get_online_count}, _From, State) ->
+    R=get_all_online_ids(),
+    {reply, length(R), State};
+
+handle_call({get_online_ids}, _From, State) ->
+    R=get_all_online_ids(),
+    {reply, R, State};
 
 handle_call({login, Id, Pid,Offline}, _From, State) when is_pid(Pid) ->
     login_call(Id,Pid,Offline),
@@ -169,7 +199,7 @@ handle_info(Info, State) ->
         {'EXIT', Pid, Why} ->
             io:format("Why exit ~w~n", [ Why]),
             % force logout:
-            handle_call({logout, Pid}, blah, State); 
+            handle_call({logout, Pid}, blah, State);
         Wtf ->
             io:format("Caught unhandled message: ~w\n", [Wtf])
     end,
@@ -193,9 +223,10 @@ first_run()->
   error_logger:info_msg(R2),
 
   R3=mnesia:create_table(?TABLE_PIDS, [
-          {ram_copies, [node()|nodes()]}, 
+          {ram_copies, [node()|nodes()]},
           {attributes, record_info(fields, online_pids)},
-          {type, bag}
+          {index,[id]},
+          {type, set}
       ]),
 
   error_logger:info_msg(R3),
@@ -203,6 +234,7 @@ first_run()->
       [
           {ram_copies, [node()|nodes()]},
           {attributes, record_info(fields, online_ids)},
+          {index,[pid]},
           {type, bag}
       ]),
   error_logger:info_msg(R4),
@@ -212,7 +244,7 @@ first_run()->
  %%              mnesia:change_table_copy_type(?TABLE_IDS, X, ramp_copies),
  %%              mnesia:change_table_copy_type(offline_msg, X, ramp_copies),
  %%              mnesia:change_table_copy_type(subscription, X, ramp_copies),
- %%              mnesia:change_table_copy_type(?TABLE_PIDS, X, ramp_copies) 
- %%      end, 
+ %%              mnesia:change_table_copy_type(?TABLE_PIDS, X, ramp_copies)
+ %%      end,
  %%      [node()|nodes()]),
     ok.

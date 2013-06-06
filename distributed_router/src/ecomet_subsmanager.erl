@@ -14,10 +14,10 @@
 
 start_link() ->
     case gen_server:start_link({local, ?SERVER},?MODULE, [], []) of
-        {ok, Pid} -> 
+        {ok, Pid} ->
             {ok, Pid};
-        {error, {already_started, Pid}} ->  
-            link(Pid), 
+        {error, {already_started, Pid}} ->
+            link(Pid),
             {ok, Pid};
         Else -> Else
     end.
