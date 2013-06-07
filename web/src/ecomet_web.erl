@@ -8,7 +8,7 @@
 
 -export([start/1, stop/0, loop/2, feed/3, loop/1]).
 
--export([ resume/3]).
+-export([resume/4, msg_send/1]).
 -define(LOOP, {?MODULE, loop}).
 -define(WAITTIME, 30000).
 %% External API
@@ -34,26 +34,36 @@ loop(Req, DocRoot) ->
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
                 case Path of
+                    "get_online_ids/" ++ _Id ->
+                        Ids = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_ids,[]),
+                        IdCount = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_count,[]),
+                        Json=mochijson2:encode({struct, [{ids,  [ list_to_binary(Iid)  ||Iid <-Ids]}, {count,IdCount }]}),
+
+                        Req:ok({_ContentType = "application/json",
+                                _Headers = [],
+                                Json});
                     "ecomet/" ++ Id ->
                         Response = Req:ok({"text/html; charset=utf-8",
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
-                        %%gen_server:call({global, ecomet_router}, {login,Id,self(),true}),
                         erlang:send_after(?WAITTIME, self(), "ping"),
-                        gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
+                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[Id,self(),true]),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id      ->
-                        gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
-                        erlang:send_after(?WAITTIME, self(), "ping"),
+                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[Id,self(),true]),
+                        TimerRef = erlang:start_timer(?WAITTIME,self(), "ping"),
                         error_logger:error_report(["loop/2"]),
                         Reentry = mochiweb_http:reentry(?LOOP),
-                        proc_lib:hibernate(?MODULE, resume, [Req,Id, Reentry]),
+                        proc_lib:hibernate(?MODULE, resume, [Req,Id, Reentry, TimerRef]),
                         io:format("not gonna happen~n", []);
                     _ ->
                         Req:serve_file(Path, DocRoot)
                 end;
             'POST' ->
                 case Path of
+                    "send/" ++ _T -> 
+                        msg_send(Req),
+                        ok(Req,"ok");
                     _ ->
                         Req:not_found()
                 end;
@@ -110,17 +120,31 @@ loop(Req) ->
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
                 case Path of
+                    "get_online_ids/" ++ _Id ->
+                        Ids = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_ids,[]),
+                        IdCount = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_count,[]),
+                        Json=mochijson2:encode({struct, [{ids,  [ list_to_binary(Iid)  ||Iid <-Ids]}, {count,IdCount }]}),
+
+                        Req:ok({_ContentType = "application/json",
+                                _Headers = [],
+                                Json});
                     "longpoll/" ++ Id      ->
                         Reentry = mochiweb_http:reentry(?LOOP),
                         erlang:send_after(?WAITTIME, self(), "ping"),
                         error_logger:error_report(["loop/1"]),
                         error_logger:error_report([Id]),
-                        proc_lib:hibernate(?MODULE, resume, [Req, Id, Reentry]);
+                        %%proc_lib:hibernate(?MODULE, resume, [Req, Id, Reentry]);
+                        TimerRef = erlang:start_timer(?WAITTIME,self(), "ping"),
+                        proc_lib:hibernate(?MODULE, resume, [Req,Id, Reentry, TimerRef]);
                     _ ->
+                        io:format("~w", [Req]),
                         Req:not_found()
                 end;
             'POST' ->
                 case Path of
+                    "send/" -> 
+                        msg_send(Req),
+                        ok(Req,"ok");
                     _ ->
                         Req:not_found()
                 end;
@@ -140,24 +164,38 @@ loop(Req) ->
     end.
 
 
-resume(Req, Id, Reentry) ->
-    error_logger:error_report(["resume/3"]),
+resume(Req, Id, Reentry,TimerRef) ->
+    error_logger:error_report(["resume/4"]),
     receive
         {router_msg, Msg} ->
+            erlang:cancel_timer(TimerRef),
             ok(Req, Msg);
         {'EXIT',_Pid,noconnection} ->
-            gen_server:call(pg2:get_closest_pid(erouter), {login,Id,self(),true}),
+            rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[Id,self(),true]),
             ok;
+        {timeout, _Pid, Msg} ->
+            Json=mochijson2:encode({struct, [{type,ping},{msg,list_to_binary(Msg)}]}),
+            ok(Req, Json);
         Msg ->
-            Text = io_lib:format("message: ~p  Pid: ~p", [Msg, self()]),
-            io:format("~w", [Msg]),
-            ok(Req, Text)
-    after  ?WAITTIME ->
-        ok
+            erlang:cancel_timer(TimerRef),
+            %%Text = io_lib:format("message: ~p  Pid: ~p", [Msg, self()]),
+            Json=mochijson2:encode({struct, [{type,ping},{msg,iolib:format("~w", [Msg])}]}),
+            ok(Req, Json)
+    %%after  ?WAITTIME ->
+    %%    ok
     end,
 
     io:format("reentering loop via continuation in ~p~n", [Req:get(path)]),
     Reentry(Req).
+
+msg_send(Req) ->
+    Args = Req:parse_post(),
+    F = proplists:get_value("from", Args, "ana"),
+    T = proplists:get_value("to", Args, "to"),
+    M = proplists:get_value("msg", Args , "nothing"),
+
+    Json=mochijson2:encode({struct, [{type,msg},{from,list_to_binary(F)}, {to, list_to_binary(T)},{msg,list_to_binary(M)}]}),
+    rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, send,[T,Json]).
 
 ok(Req, Response) ->
     Req:ok({_ContentType = "text/plain",

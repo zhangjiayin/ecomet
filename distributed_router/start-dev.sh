@@ -1,7 +1,7 @@
 #!/bin/sh
 # NOTE: mustache templates need \ because they are not awesome.
 exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
-    -name "erouter@10.32.232.28" \
+    -name "erouter@127.0.0.1" \
     -setcookie abc \
     -mnesia dir '"./mnesia"' \
     -K true \
