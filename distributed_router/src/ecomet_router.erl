@@ -6,18 +6,15 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3, first_run/0]).
 
--export([send/2,send/3,publish/2,publish/3,login/2,login/3, logout/1, get_online_count/0, get_online_ids/0]).
+-export([send/3,send/4,publish/3,publish/4,login/3,login/4, logout/1, get_online_count/1, get_online_ids/1]).
 
 -define(SERVER, ?MODULE).
 
--define(TABLE_PIDS,online_pids).
--define(TABLE_IDS, online_ids).
+-define(TABLE_ONLINE, onlines).
 
 -record(state, {}).
 
--record(online_pids, {online_pid, id}).
-
--record(online_ids, {online_id,pid}).
+-record(onlines, {pid, appid, uid}).
 
 start() ->
     start_link().
@@ -34,41 +31,33 @@ start_link() ->
         Else -> Else
     end.
 
-get_all_online_ids()->
-    F = fun() ->
-            qlc:e(qlc:q([X||X<-mnesia:table(?TABLE_IDS)]))
-    end,
-    case mnesia:transaction(F) of
-        {atomic,L} ->
-            %%R=L;
-            R=[ Id ||{online_ids, Id,_Pid }<- L];
-        _   ->
-            R = []
-    end,
-    Set = sets:from_list(R),
-    sets:to_list(Set).
+get_all_online_ids(Appid)->
+   Us = mnesia:dirty_match_object(#onlines{pid='_',appid=Appid,uid='_'}),
+   Users = [Uid || {onlines, _, _, Uid} <- Us],
+   error_logger:info_msg("Users ~w ~w\n",[Us, Users]),
+   Users.
 
-get_online_count() ->
-    gen_server:call(?MODULE, {get_online_count}).
+get_online_count(Appid) ->
+    gen_server:call(?MODULE, {get_online_count,Appid}).
 
-get_online_ids() ->
-    gen_server:call(?MODULE, {get_online_ids}).
+get_online_ids(Appid) ->
+    gen_server:call(?MODULE, {get_online_ids,Appid}).
 
-send(Id, Msg) ->
-    gen_server:call(?MODULE, {send, Id, Msg}).
-send(Id, Msg,Offline) ->
-    gen_server:call(?MODULE, {send, Id, Msg, Offline}).
+send(Appid, Id, Msg) ->
+    gen_server:call(?MODULE, {send, Appid, Id, Msg}).
+send(Appid, Id, Msg,Offline) ->
+    gen_server:call(?MODULE, {send, Appid, Id, Msg, Offline}).
 
-publish(Id, Msg) ->
-    gen_server:call(?MODULE, {publish, Id, Msg}).
-publish(Id, Msg,Offline) ->
-    gen_server:call(?MODULE, {publish, Id, Msg, Offline}).
+publish(Appid, Id, Msg) ->
+    gen_server:call(?MODULE, {publish, Appid, Id, Msg}).
+publish(Appid, Id, Msg,Offline) ->
+    gen_server:call(?MODULE, {publish, Appid, Id, Msg, Offline}).
 
-login(Id, Pid) when is_pid(Pid) ->
-    gen_server:call(?MODULE, {login, Id, Pid}).
+login(Appid, Id, Pid) when is_pid(Pid) ->
+    gen_server:call(?MODULE, {login, Appid, Id, Pid}).
 
-login(Id, Pid, Offline) when is_pid(Pid) ->
-    gen_server:call(?MODULE, {login, Id, Pid, Offline}).
+login(Appid, Id, Pid, Offline) when is_pid(Pid) ->
+    gen_server:call(?MODULE, {login, Appid, Id, Pid, Offline}).
 
 
 logout(Pid) when is_pid(Pid) ->
@@ -77,30 +66,25 @@ logout(Pid) when is_pid(Pid) ->
 %%
 
 init([]) ->
-    % set this so we can catch death of logged in pids:
     process_flag(trap_exit, true),
-    % use ets for routing tables
-
     ok = mnesia:start(),
     io:format("Waiting on mnesia tables..\n",[]),
-    mnesia:wait_for_tables([?TABLE_PIDS, ?TABLE_IDS], 30000),
-    Info = mnesia:table_info(?TABLE_PIDS, all),
-    Info1 = mnesia:table_info(?TABLE_IDS, all),
-    io:format("OK. Subscription table info: \n~w\n~w\n",[Info,Info1]),
+    mnesia:wait_for_tables([?TABLE_ONLINE], 30000),
+    Info = mnesia:table_info(?TABLE_ONLINE, all),
+    error_logger:info_msg("OK. Subscription table info: \n~w\n",[Info]),
     {ok, #state{} }.
 
 
-login_call(Id,Pid,Offline) when is_pid(Pid) ->
-    Online_pids = #online_pids{online_pid=Pid,id=Id},
-    Online_ids = #online_ids{online_id=Id, pid=Pid},
-    mnesia:dirty_write(Online_ids),
-    mnesia:dirty_write(Online_pids),
+login_call(Appid, Uid,Pid,Offline) when is_pid(Pid) ->
+    Onlines = #onlines{pid=Pid,appid=Appid, uid = Uid},
+    R =mnesia:dirty_write(Onlines),
+    error_logger:info_msg("~w R= ~w",[Onlines, R]),
     link(Pid), % tell us if they exit, so we can log them out
-    io:format("~w logged in as ~w\n",[Pid, Id]),
-    io:format("Offline ~w\n",[Offline]),
+    error_logger:info_msg("~w logged in as \n",[Onlines]),
+    error_logger:info_msg("Offline ~w\n",[Offline]),
     case Offline of
         true ->
-            Msgs = ecomet_offline:get_msg(Id),
+            Msgs = ecomet_offline:get_msg(Appid, Uid),
             io:format("Msgs ~w\n",[Msgs]),
             case Msgs of
                 [] ->
@@ -110,87 +94,85 @@ login_call(Id,Pid,Offline) when is_pid(Pid) ->
                 _->
                     io:format("Msgs ~w~n", Msgs),
                     [ Pid ! {router_msg, Msg} || Msg <- Msgs ],
-                    ecomet_offline:delete(Id),
+                    ecomet_offline:delete(Appid, Uid),
                     ok
             end;
         _ ->
             ok
     end.
 
-send_call (Id,Msg,Offline) ->
-    Pids = mnesia:dirty_match_object(#online_ids{online_id=Id,pid='_'}),
+send_call (Appid, Uid,Msg,Offline) ->
+    Pids = mnesia:dirty_match_object(#onlines{pid='_', appid=Appid,uid=Uid}),
     % send Msg to them all
     M = {router_msg, Msg},
-    io:format("pids~w~n",[Pids]),
+    io:format("pids~w~nAppid: ~w Uid, ~w ",[Pids,Appid,Uid]),
     case Pids of
         [] ->
             case Offline of
                 true ->
-                    ecomet_offline:store(Id, Msg);
+                    ecomet_offline:store(Appid, Uid, Msg);
                 _->
                     ok
             end,
             ok;
         _ ->
             io:format("~w",[Pids]),
-            [Pid ! M || {online_ids,_,Pid} <- Pids]
+            [Pid ! M || {onlines,Pid,_,_} <- Pids]
     end.
 
-publish_call (Id,Msg,Offline, From,State)->
+%%TODO
+publish_call (Appid, Id,Msg,Offline, From,State)->
     F = fun() ->
-            Users = ecomet_subsmanager:get_subscribers(Id),
-            %%Users = gen_server:call(pg2:get_closest_pid(ecomet_subsmanager),{get_subscribers,Id}),
-            [ send_call(User,Msg, Offline) || User <- Users ],
+            Users = ecomet_subsmanager:get_subscribers(Appid, Id),
+            [ send_call(Appid, User, Msg, Offline) || User <- Users ],
             gen_server:reply(From, {ok, length(Users)})
     end,
     spawn(F),
     {noreply, State}.
 
 
-handle_call({get_online_count}, _From, State) ->
-    R=get_all_online_ids(),
+handle_call({get_online_count,Appid}, _From, State) ->
+    R=get_all_online_ids(Appid),
     {reply, length(R), State};
 
-handle_call({get_online_ids}, _From, State) ->
-    R=get_all_online_ids(),
+handle_call({get_online_ids,Appid}, _From, State) ->
+    R=get_all_online_ids(Appid),
     {reply, R, State};
 
-handle_call({login, Id, Pid,Offline}, _From, State) when is_pid(Pid) ->
-    login_call(Id,Pid,Offline),
-    {reply, ok, State};
-handle_call({login, Id, Pid}, _From, State) when is_pid(Pid) ->
-    login_call(Id,Pid,false),
-    {reply, ok, State};
+handle_call({login,Appid, Uid, Pid,Offline}, _From, State) when is_pid(Pid) ->
+    {reply, login_call(Appid, Uid,Pid,Offline), State};
+handle_call({login, Appid, Id, Pid}, _From, State) when is_pid(Pid) ->
+    {reply,login_call(Id,Appid,Pid,false), State};
 
 handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
     unlink(Pid),
-    PidRows = mnesia:dirty_match_object(#online_pids{online_pid=Pid, id='_'}),
+    PidRows = mnesia:dirty_match_object(#onlines{pid=Pid, appid='_',uid='_'}),
     case PidRows of
         [] ->
+            A = ok,
             ok;
         _ ->
-            IdRows = [ {I,P} || {online_pids,P,I} <- PidRows ], % invert tuples
-            mnesia:dirty_delete({?TABLE_PIDS,Pid}),
-            [mnesia:dirty_delete_object(#online_ids{online_id=_Id, pid=Pid1}) || {_Id, Pid1}<- IdRows ]
+            A = mnesia:dirty_delete({?TABLE_ONLINE,Pid})
+            %%[mnesia:dirty_delete_object(#online_ids{online_id=_Id, pid=Pid1}) || {_Id, Pid1}<- IdRows ]
     end,
-    io:format("pid ~w logged out\n",[Pid]),
-    {reply, ok, State};
+    error_logger:info_msg("~w logout~n",PidRows),
+    {reply, A, State};
 
-handle_call({publish, Id, Msg, Offline}, From, State) ->
-    publish_call (Id, Msg, Offline, From,State),
+handle_call({publish,Appid, Id, Msg, Offline}, From, State) ->
+    publish_call (Appid, Id, Msg, Offline, From,State),
     {noreply, State};
 
-handle_call({publish, Id, Msg}, From, State) ->
-    publish_call (Id, Msg, false, From,State),
+handle_call({publish, Appid, Id, Msg}, From, State) ->
+    publish_call (Appid, Id, Msg, false, From,State),
     {noreply, State};
 
-handle_call({send, Id, Msg,Offline}, _From, State) ->
-    send_call(Id,Msg,Offline),
+handle_call({send, Appid, Id, Msg,Offline}, _From, State) ->
+    send_call(Appid, Id,Msg,Offline),
     {reply, ok, State};
 
-handle_call({send, Id, Msg}, _From, State) ->
+handle_call({send, Appid, Id, Msg}, _From, State) ->
     Offline = false,
-    send_call(Id,Msg,Offline),
+    send_call(Appid, Id,Msg,Offline),
     {reply, ok, State}.
 
 % handle death and cleanup of logged in processes
@@ -216,28 +198,18 @@ first_run()->
    mnesia:create_schema([node()|nodes()]),
    ok = mnesia:start(),
    R1= ecomet_offline:first_run(),
-  %%R1 = gen_server:call(pg2:get_closest_pid(ecomet_offline),{first_run}),
   error_logger:info_msg(R1),
   R2 = ecomet_subsmanager:first_run(),
-  %%R2 = gen_server:call(pg2:get_closest_pid(ecomet_subsmanager),{first_run}),
   error_logger:info_msg(R2),
 
-  R3=mnesia:create_table(?TABLE_PIDS, [
+  R3=mnesia:create_table(?TABLE_ONLINE, [
           {ram_copies, [node()|nodes()]},
-          {attributes, record_info(fields, online_pids)},
-          {index,[id]},
+          {attributes, record_info(fields, onlines)},
+          {index,[appid,uid]},
           {type, set}
       ]),
 
   error_logger:info_msg(R3),
-  R4=mnesia:create_table(?TABLE_IDS,
-      [
-          {ram_copies, [node()|nodes()]},
-          {attributes, record_info(fields, online_ids)},
-          {index,[pid]},
-          {type, bag}
-      ]),
-  error_logger:info_msg(R4),
 
  %%  lists:foreach(fun(X)->
  %%              mnesia:change_config(extra_db_nodes, [X]),

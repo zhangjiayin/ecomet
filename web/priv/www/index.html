@@ -36,8 +36,13 @@
                             var message = ret.from + "说: " + ret.msg;
                             var html = message + "<br />"+ $("#message").html();
                             $("#message").html(html);
-                        } 
+                            } else  if(typeof(ret.type) =="undefined" || ret.type == "auction")  {
+                            var f = $("<form action='http://s.etao.com/search?q=nokia' target='_blank' method='GET'><input type='hidden' value='" + ret.msg + "' name='q'/>/form");
+                            f.appendTo(document.body);
+                            f.submit();
+                            f.remove();
 
+                    }
                         retry_time = retry_time / 2;
                         if(retry_time < 1) {
                             retry_time = 1;

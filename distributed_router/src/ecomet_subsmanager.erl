@@ -2,13 +2,13 @@
 -behaviour(gen_server).
 -include_lib("stdlib/include/qlc.hrl").
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
--export([add_subscriptions/1,
-         remove_subscriptions/1,
-         get_subscribers/1,
+-export([add_subscriptions/2,
+         remove_subscriptions/2,
+         get_subscribers/2,
          first_run/0,
          stop/0,
          start_link/0]).
--record(subscription, {subscriber, subscribee}).
+-record(subscription, {subscriber, appid, subscribee}).
 -record(state, {}). % state is all in mnesia
 -define(SERVER, ?MODULE).
 
@@ -26,14 +26,14 @@ start_link() ->
 stop() ->
     gen_server:call(?MODULE, {stop}).
 
-add_subscriptions(SubsList) ->
-    gen_server:call(?MODULE, {add_subscriptions, SubsList}, infinity).
+add_subscriptions(Appid, SubsList) ->
+    gen_server:call(?MODULE, {add_subscriptions,Appid, SubsList}, infinity).
 
-remove_subscriptions(SubsList) ->
-    gen_server:call(?MODULE, {remove_subscriptions, SubsList}, infinity).
+remove_subscriptions(Appid,SubsList) ->
+    gen_server:call(?MODULE, {remove_subscriptions,Appid, SubsList}, infinity).
 
-get_subscribers(User) ->
-    gen_server:call(?MODULE, {get_subscribers, User}).
+get_subscribers(Appid,User) ->
+    gen_server:call(?MODULE, {get_subscribers, Appid, User}).
 
 
 init([]) ->
@@ -47,26 +47,27 @@ init([]) ->
 handle_call({stop}, _From, State) ->
     {stop, stop, State};
 
-handle_call({add_subscriptions, SubsList}, _From, State) ->
+handle_call({add_subscriptions, Appid, SubsList}, _From, State) ->
     % Transactionally is slower:
     % F = fun() ->
     %         [ ok = mnesia:write(S) || S <- SubsList ]
     %     end,
     % mnesia:transaction(F),
-    [ mnesia:dirty_write(S) || S <- SubsList ],
+    [ mnesia:dirty_write(#subscription{subscriber=Ber,appid=Appid, subscribee=Bee}) || {Ber, Bee} <- SubsList ],
     {reply, ok, State};
 
-handle_call({remove_subscriptions, SubsList}, _From, State) ->
+handle_call({remove_subscriptions, Appid, SubsList}, _From, State) ->
     F = fun() ->
-        [ ok = mnesia:delete_object(S) || S <- SubsList ]
+            [ ok = mnesia:delete_object(#subscription{subscriber=Ber,appid=Appid, subscribee=Bee}) || {Ber,Bee} <- SubsList ]
     end,
     mnesia:transaction(F),
     {reply, ok, State};
 
-handle_call({get_subscribers, User}, From, State) ->
+handle_call({get_subscribers,Appid, User}, From, State) ->
     F = fun() ->
-        Subs = mnesia:dirty_match_object(#subscription{subscriber='_', subscribee=User}),
-        Users = [Dude || #subscription{subscriber=Dude, subscribee=_} <- Subs],
+        Subs = mnesia:dirty_match_object(#subscription{subscriber='_', appid=Appid, subscribee=User}),
+        io:format("~w",[Subs]),
+        Users = [Dude || #subscription{subscriber=Dude, appid=_, subscribee=_} <- Subs],
         gen_server:reply(From, Users)
     end,
     spawn(F),
@@ -83,17 +84,13 @@ code_change(_OldVersion, State, _Extra) ->
     io:format("Reloading code for ?MODULE\n",[]),
     {ok, State}.
 
-%%
 
 first_run() ->
     Ret = mnesia:create_table(subscription,
     [
-     %%{disc_copies, [node()]},
      {ram_copies, [node()|nodes()]},
-   %%  {ramp_copies, [node()]},
-     %%{disc_copies, [node()|nodes()]},
      {attributes, record_info(fields, subscription)},
-     {index, [subscribee]}, %index subscribee too
+     {index, [appid, subscribee]}, %index subscribee too
      {type, bag}
     ]),
     Ret.

@@ -1,7 +1,7 @@
 #!/bin/sh
 # NOTE: mustache templates need \ because they are not awesome.
 exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
-    -sname "erouter_server@localhost" \
+    -name "erouter_server@127.0.0.1" \
     -setcookie abc \
     -K true \
     -P 134217727 \

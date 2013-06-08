@@ -44,14 +44,19 @@ use Thrift\Transport\TBufferedTransport;
 use Thrift\Exception\TException;
 
 try {
-    $socket = new TSocket('localhost', 9999);
+    $socket = new TSocket('127.0.0.1', 9999);
   $transport = new TBufferedTransport($socket, 1024, 1024);
   $protocol = new TBinaryProtocol($transport);
   $client = new  etao\erouter\EcometRouterClient($protocol);
 
   $transport->open();
-
-  $client->send("12345","qotade");
+    
+  $a = json_encode( array(
+      "from" =>  "系统消息",
+      "msg" => "令小湛",
+      "type" => "auction",
+  ) );
+  $client->send(1,'2',$a,true);
 
   $transport->close();
     $socket->close( );

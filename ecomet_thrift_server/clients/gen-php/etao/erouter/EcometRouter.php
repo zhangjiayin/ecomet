@@ -16,7 +16,7 @@ use Thrift\Exception\TApplicationException;
 
 
 interface EcometRouterIf {
-  public function send($Id, $Msg);
+  public function send($AppId, $Id, $Msg);
 }
 
 class EcometRouterClient implements \etao\erouter\EcometRouterIf {
@@ -30,14 +30,15 @@ class EcometRouterClient implements \etao\erouter\EcometRouterIf {
     $this->output_ = $output ? $output : $input;
   }
 
-  public function send($Id, $Msg)
+  public function send($AppId, $Id, $Msg)
   {
-    $this->send_send($Id, $Msg);
+    $this->send_send($AppId, $Id, $Msg);
   }
 
-  public function send_send($Id, $Msg)
+  public function send_send($AppId, $Id, $Msg)
   {
     $args = new \etao\erouter\EcometRouter_send_args();
+    $args->AppId = $AppId;
     $args->Id = $Id;
     $args->Msg = $Msg;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
@@ -60,6 +61,7 @@ class EcometRouterClient implements \etao\erouter\EcometRouterIf {
 class EcometRouter_send_args {
   static $_TSPEC;
 
+  public $AppId = null;
   public $Id = null;
   public $Msg = null;
 
@@ -67,16 +69,23 @@ class EcometRouter_send_args {
     if (!isset(self::$_TSPEC)) {
       self::$_TSPEC = array(
         1 => array(
-          'var' => 'Id',
+          'var' => 'AppId',
           'type' => TType::STRING,
           ),
         2 => array(
+          'var' => 'Id',
+          'type' => TType::STRING,
+          ),
+        3 => array(
           'var' => 'Msg',
           'type' => TType::STRING,
           ),
         );
     }
     if (is_array($vals)) {
+      if (isset($vals['AppId'])) {
+        $this->AppId = $vals['AppId'];
+      }
       if (isset($vals['Id'])) {
         $this->Id = $vals['Id'];
       }
@@ -107,12 +116,19 @@ class EcometRouter_send_args {
       {
         case 1:
           if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->Id);
+            $xfer += $input->readString($this->AppId);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
         case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->Id);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
           if ($ftype == TType::STRING) {
             $xfer += $input->readString($this->Msg);
           } else {
@@ -132,13 +148,18 @@ class EcometRouter_send_args {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('EcometRouter_send_args');
+    if ($this->AppId !== null) {
+      $xfer += $output->writeFieldBegin('AppId', TType::STRING, 1);
+      $xfer += $output->writeString($this->AppId);
+      $xfer += $output->writeFieldEnd();
+    }
     if ($this->Id !== null) {
-      $xfer += $output->writeFieldBegin('Id', TType::STRING, 1);
+      $xfer += $output->writeFieldBegin('Id', TType::STRING, 2);
       $xfer += $output->writeString($this->Id);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->Msg !== null) {
-      $xfer += $output->writeFieldBegin('Msg', TType::STRING, 2);
+      $xfer += $output->writeFieldBegin('Msg', TType::STRING, 3);
       $xfer += $output->writeString($this->Msg);
       $xfer += $output->writeFieldEnd();
     }

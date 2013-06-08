@@ -5,7 +5,7 @@
 
 -export([start_link/0, stop/1,start/0,
          handle_function/2,
-         send/2, send/3,
+         send/4, send/3,
          handle_error/2
 % Thrift implementations
 % FILL IN HERE
@@ -13,7 +13,7 @@
 
 %%%%% EXTERNAL INTERFACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    net_adm:ping('erouter@localhost'),
+    net_adm:ping('erouter@127.0.0.1'),
     start_link().
 
 start_link() ->
@@ -33,14 +33,13 @@ handle_function(Function, Args) when is_atom(Function), is_tuple(Args) ->
 
 %%%%% HELPER FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-send(Id, Msg)->
-    io:format("Id: ~w, Msg ~w ~n", [Id,Msg]),
-    
-    gen_server:call(pg2:get_closest_pid(erouter), {send,binary_to_list(Id),binary_to_list(Msg)}),
+send(Appid, Id, Msg)->
+    io:format("Appid,~w Id: ~w, Msg ~w ~n", [Appid, Id,Msg]),
+    gen_server:call(pg2:get_closest_pid(erouter), {send,list_to_integer(binary_to_list(Appid)),binary_to_list(Id),binary_to_list(Msg)}),
     ok.
-send(Id,Msg,Offline)->
+send(Appid, Id,Msg,Offline)->
     io:format("Id: ~w, Msg ~w Offline ~w~n", [Id,Msg,Offline]),
-    gen_server:call(pg2:get_closest_pid(erouter), {send,Id,Msg,Offline}),
+    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,Msg,Offline}),
     ok.
 
 get_port() ->

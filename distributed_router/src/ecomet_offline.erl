@@ -6,20 +6,17 @@
          first_run/0,
      terminate/2, code_change/3]).
 
--export([store/2,get_msg/1, delete/1]).
+-export([store/3,get_msg/2, delete/2]).
 
 -record(state, {}). % state is all in mnesia
--record(offline_msg, {id,msg}).
+-record(offline_msg, {id,appid,msg}).
 
-%%-define(SERVER, global:whereis_name(?MODULE)).
 -define(SERVER, ?MODULE).
 -define(TABLE_OFFLINE, offline_msg).
 
 start_link() ->
     case gen_server:start_link({local,?SERVER},?MODULE, [], []) of
         {ok, Pid} -> 
-%%             pg2:create(ecomet_offline),
-%%             pg2:join(ecomet_offline, Pid),
             {ok, Pid};
         {error, {already_started, Pid}} ->  
             link(Pid), 
@@ -28,14 +25,14 @@ start_link() ->
     end.
 
 % sends Msg to anyone logged in as Id
-store(Id, Msg) ->
-    gen_server:call(?SERVER, {store, Id, Msg}).
+store(Appid, Id, Msg) ->
+    gen_server:call(?SERVER, {store, Appid, Id, Msg}).
 
-get_msg(Id) ->
-    gen_server:call(?SERVER, {get_msg, Id}).
+get_msg(Appid, Id) ->
+    gen_server:call(?SERVER, {get_msg, Appid, Id}).
 
-delete(Id) ->
-    gen_server:call(?SERVER, {delete,Id}).
+delete(Appid, Id) ->
+    gen_server:call(?SERVER, {delete,Appid, Id}).
 init([]) ->
     process_flag(trap_exit, true),
     ok = mnesia:start(),
@@ -45,23 +42,29 @@ init([]) ->
     io:format("OK. Subscription table info: \n~w\n\n",[Info]),
     {ok, #state{} }.
 
-handle_call({store, Id, Msg}, _From, State)  ->
-    mnesia:dirty_write(#offline_msg{id=Id, msg=Msg}),
+handle_call({store, Appid, Id, Msg}, _From, State)  ->
+    mnesia:dirty_write(#offline_msg{id=Id,appid=Appid, msg=Msg}),
     {reply, ok, State};
-handle_call({get_msg, Id}, From, State) ->
-    Msgs = mnesia:dirty_match_object(#offline_msg{id=Id,msg='_'}),
+handle_call({get_msg, Appid, Id}, From, State) ->
+    Msgs = mnesia:dirty_match_object(#offline_msg{id=Id,appid=Appid, msg='_'}),
     case Msgs of
         [] -> 
-            ok;
+            [];
         _ ->
-            Msgret = [Msg || #offline_msg{id=_,msg=Msg} <- Msgs],
+            Msgret = [Msg || #offline_msg{id=_,appid=_, msg=Msg} <- Msgs],
             gen_server:reply(From, Msgret),
             ok
     end,
     {reply, ok, State};
-handle_call({delete, Id}, _From, State) ->
-    mnesia:dirty_delete({?TABLE_OFFLINE,Id}),
-    {reply, ok, State}.
+handle_call({delete, Appid,Id}, _From, State) ->
+    Delete=#offline_msg{id=Id,appid=Appid, _='_'},
+    Fun = fun() ->
+            List = mnesia:match_object(Delete),
+            lists:foreach(fun(X) ->
+                        mnesia:delete_object(X)
+                end, List)
+    end,
+    {reply, mnesia:transaction(Fun), State}.
 % handle death and cleanup of logged in processes
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -80,7 +83,7 @@ first_run() ->
        %%{ramp_copies, [node()|nodes()]},
       %% {ramp_copies, [node()]},
      {attributes, record_info(fields, offline_msg)},
-     %%{index, [id]}, %index subscribee too
+     {index, [appid]}, %index subscribee too
      {type, bag}
     ]),
     Ret.

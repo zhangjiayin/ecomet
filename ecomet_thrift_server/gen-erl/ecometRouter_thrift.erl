@@ -14,10 +14,11 @@
 
 struct_info('i am a dummy struct') -> undefined.
 %%% interface
-% send(This, Id, Msg)
+% send(This, AppId, Id, Msg)
 function_info('send', params_type) ->
   {struct, [{1, string},
-          {2, string}]}
+          {2, string},
+          {3, string}]}
 ;
 function_info('send', reply_type) ->
   oneway_void;
