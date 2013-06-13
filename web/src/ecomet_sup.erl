@@ -41,17 +41,13 @@ upgrade() ->
 %% @spec init([]) -> SupervisorTree
 %% @doc supervisor callback.
 init([]) ->
-    Web = web_specs(ecomet_web, 8080),
+    Web = web_specs(ecomet_web),
     Processes = [Web],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.
 
-web_specs(Mod, Port) ->
-    WebConfig = [{ip, {0,0,0,0}},
-                 {port, Port},
-                 {cluster_nodes, ['erouter@127.0.0.1','n2@localhost', 'n1@localhost']},
-                 {docroot, ecomet_deps:local_path(["priv", "www"])}],
+web_specs(Mod) ->
     {Mod,
-     {Mod, start, [WebConfig]},
+     {Mod, start, []},
      permanent, 5000, worker, dynamic}.
