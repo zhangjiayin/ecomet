@@ -20,6 +20,29 @@ start() ->
     start_link().
 
 start_link() ->
+    mnesia:start(),
+    {ok,Leader} = application:get_env(leader),
+    net_adm:ping(Leader),
+
+    case mnesia:create_table(?TABLE_ONLINE, []) of
+         {atomic, ok} ->
+             error_logger:info_msg("leader ~w, node ~w ok", [Leader, node()]),
+             mnesia:delete_table(?TABLE_ONLINE),
+             case (node() == Leader) of 
+                 true ->
+                     mnesia:stop(),
+                     mnesia:delete_schema([node()]),
+                     first_run();
+                 _ ->
+                     error_logger:info_msg("==================I'm slave"),
+                     sync_db(Leader),
+                     ok
+             end;
+         _  ->
+             error_logger:info_msg("table exists ok")
+     end,
+
+
     case gen_server:start_link({local, ?SERVER},?MODULE, [], []) of
         {ok, Pid} ->
              pg2:create(erouter),
@@ -195,7 +218,7 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 first_run()->
-   mnesia:create_schema([node()|nodes()]),
+   mnesia:create_schema([node()]),
    ok = mnesia:start(),
    R1= ecomet_offline:first_run(),
   error_logger:info_msg(R1),
@@ -211,12 +234,19 @@ first_run()->
 
   error_logger:info_msg(R3),
 
- %%  lists:foreach(fun(X)->
- %%              mnesia:change_config(extra_db_nodes, [X]),
- %%              mnesia:change_table_copy_type(?TABLE_IDS, X, ramp_copies),
- %%              mnesia:change_table_copy_type(offline_msg, X, ramp_copies),
- %%              mnesia:change_table_copy_type(subscription, X, ramp_copies),
- %%              mnesia:change_table_copy_type(?TABLE_PIDS, X, ramp_copies)
- %%      end,
- %%      [node()|nodes()]),
-    ok.
+  ok.
+
+sync_db(N) ->
+    mnesia:change_config(extra_db_nodes, [N]),
+
+    mnesia:add_table_copy(schema, node(), disc_copies),
+    mnesia:add_table_copy(offline_msg, node(), ram_copies),
+    mnesia:add_table_copy(subscription, node(), ram_copies),
+    mnesia:add_table_copy(?TABLE_ONLINE, node(), ram_copies),
+
+
+    mnesia:change_table_copy_type(schema, node(), disc_copies),
+    mnesia:change_table_copy_type(offline_msg, node(), ram_copies),
+    mnesia:change_table_copy_type(subscription, node(), ram_copies),
+    mnesia:change_table_copy_type(?TABLE_ONLINE, node(), ram_copies).
+
