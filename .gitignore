@@ -16,3 +16,7 @@ ecomet_thrift_server/deps/thrift/
 router/mnesia/LATEST.LOG
 
 router/mnesia/schema.DAT
+
+thrift_server/deps/jsx/
+
+thrift_server/deps/thrift/
