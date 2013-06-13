@@ -12,3 +12,7 @@ distributed_router/erl_crash.dump
 ecomet_thrift_server/deps/jsx/
 
 ecomet_thrift_server/deps/thrift/
+
+router/mnesia/LATEST.LOG
+
+router/mnesia/schema.DAT

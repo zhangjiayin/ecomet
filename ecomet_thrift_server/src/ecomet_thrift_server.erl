@@ -13,10 +13,23 @@
 
 %%%%% EXTERNAL INTERFACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    net_adm:ping('erouter@127.0.0.1'),
     start_link().
 
 start_link() ->
+    %%{ok,Leader} = application:get_env(leader),
+    {ok,Leader} = init:get_argument(leader),
+    io:format("=========================start link\n ~w", [Leader]),
+    lists:foreach(fun (X) ->
+                lists:foreach(fun (Y) ->
+                            io:format("=========================start link\n ~w", [erlang:list_to_atom(Y)]),
+                    net_adm:ping(erlang:list_to_atom(Y))
+                    end,X)
+    end , Leader),
+   %% [Leader1] = Leader,
+ %%   io:format("=========================start link\n ~w", [Leader1]),
+    %%A = application:get_all_env(ecomet_router),
+%%    net_adm:ping(erlang:list_to_atom(Leader1)),
+    %%io:format("=========================start link\n ~w", [Leader1]),
     thrift_server:start_link(get_port(), ecometRouter_thrift, ?MODULE).
 
 stop(Server) ->
