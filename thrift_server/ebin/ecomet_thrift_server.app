@@ -5,6 +5,5 @@
               {applications,[kernel,stdlib]},
               {mod,{ecomet_thrift_server_app,[]}},
               {env,[]},
-              {modules,[ecometRouter_thrift,ecomet_router_types,
-                        ecomet_thrift_server,ecomet_thrift_server_app,
+              {modules,[ecomet_thrift_server,ecomet_thrift_server_app,
                         ecomet_thrift_server_sup]}]}.
