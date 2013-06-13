@@ -51,12 +51,14 @@ try {
 
   $transport->open();
     
+  for( $i=0;$i<100;$i++ ) {
   $a = json_encode( array(
       "from" =>  "系统消息",
-      "msg" => "令小湛",
+      "msg" => "令小湛" . $i,
       "type" => "auction",
   ) );
-  $client->send(1,'2',$a,true);
+      $client->send(1,'2',$a);
+  }
 
   $transport->close();
     $socket->close( );
