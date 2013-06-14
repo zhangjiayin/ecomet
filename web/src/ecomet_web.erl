@@ -38,6 +38,8 @@ loop(Req, DocRoot,Keepalive) ->
                     "get_online_ids/" ++ _Id ->
                         Ids = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_ids,[1]),
                         IdCount = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_count,[1]),
+                        error_logger:info_msg("~w", [Ids]),
+                        error_logger:info_msg("~w", [IdCount]),
                         Json=mochijson2:encode({struct, [{ids,  [ list_to_binary(Iid)  ||Iid <-Ids]}, {count,IdCount }]}),
 
                         Req:ok({_ContentType = "application/json",
@@ -48,10 +50,10 @@ loop(Req, DocRoot,Keepalive) ->
                                 [{"Server","Mochiweb-Test"}],
                                 chunked}),
                         erlang:send_after(?WAITTIME, self(), "ping"),
-                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1, Id,self(),true]),
+                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1, Id,self(),true]),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id      ->
-                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,Id,self(),true]),
+                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,Id,self(),true]),
                         TimerRef = erlang:start_timer(?WAITTIME,self(), "ping"),
                         error_logger:error_report(["loop/2"]),
                         Reentry = mochiweb_http:reentry({?MODULE, loop,[DocRoot,keepalive]}),
@@ -105,7 +107,7 @@ resume(Req, Id, Reentry,TimerRef) ->
             erlang:cancel_timer(TimerRef),
             ok(Req, Msg);
         {'EXIT',_Pid,noconnection} ->
-            rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,Id,self(),true]),
+            rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,Id,self(),true]),
             ok;
         {timeout, _Pid, Msg} ->
             Json=mochijson2:encode({struct, [{type,ping},{msg,list_to_binary(Msg)}]}),

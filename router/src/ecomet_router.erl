@@ -6,7 +6,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3, first_run/0]).
 
--export([send/3,send/4,publish/3,publish/4,login/3,login/4, logout/1, get_online_count/1, get_online_ids/1]).
+-export([send/3,send/4,publish/3,publish/4,login/4,login/5, logout/1, get_online_count/1, get_online_ids/1]).
 
 -define(SERVER, ?MODULE).
 
@@ -14,7 +14,7 @@
 
 -record(state, {}).
 
--record(onlines, {pid, appid, uid}).
+-record(onlines, {pid, appid, type, uid, ctime}).
 
 start() ->
     start_link().
@@ -54,9 +54,12 @@ start_link() ->
         Else -> Else
     end.
 
+timestamp() ->
+        calendar:datetime_to_gregorian_seconds(erlang:universaltime()).
+
 get_all_online_ids(Appid)->
-   Us = mnesia:dirty_match_object(#onlines{pid='_',appid=Appid,uid='_'}),
-   Users = [Uid || {onlines, _, _, Uid} <- Us],
+   Us = mnesia:dirty_match_object(#onlines{pid='_',appid=Appid,type='_',uid='_',ctime='_'}),
+   Users = [Uid || {onlines, _, _,_, Uid,_} <- Us],
    error_logger:info_msg("Users ~w ~w\n",[Us, Users]),
    Users.
 
@@ -76,11 +79,11 @@ publish(Appid, Id, Msg) ->
 publish(Appid, Id, Msg,Offline) ->
     gen_server:call(?MODULE, {publish, Appid, Id, Msg, Offline}).
 
-login(Appid, Id, Pid) when is_pid(Pid) ->
-    gen_server:call(?MODULE, {login, Appid, Id, Pid}).
+login(Appid, Type, Id, Pid) when is_pid(Pid) ->
+    gen_server:call(?MODULE, {login, Appid,Type,  Id, Pid}).
 
-login(Appid, Id, Pid, Offline) when is_pid(Pid) ->
-    gen_server:call(?MODULE, {login, Appid, Id, Pid, Offline}).
+login(Appid,Type, Id, Pid, Offline) when is_pid(Pid) ->
+    gen_server:call(?MODULE, {login, Appid, Type, Id, Pid, Offline}).
 
 
 logout(Pid) when is_pid(Pid) ->
@@ -98,8 +101,8 @@ init([]) ->
     {ok, #state{} }.
 
 
-login_call(Appid, Uid,Pid,Offline) when is_pid(Pid) ->
-    Onlines = #onlines{pid=Pid,appid=Appid, uid = Uid},
+login_call(Appid, Type, Uid, Pid,Offline) when is_pid(Pid) ->
+    Onlines = #onlines{pid=Pid,appid=Appid,type=Type,uid=Uid,ctime= timestamp()},
     R =mnesia:dirty_write(Onlines),
     error_logger:info_msg("~w R= ~w",[Onlines, R]),
     link(Pid), % tell us if they exit, so we can log them out
@@ -125,7 +128,7 @@ login_call(Appid, Uid,Pid,Offline) when is_pid(Pid) ->
     end.
 
 send_call (Appid, Uid,Msg,Offline) ->
-    Pids = mnesia:dirty_match_object(#onlines{pid='_', appid=Appid,uid=Uid}),
+    Pids = mnesia:dirty_match_object(#onlines{pid='_', appid=Appid,type='_', uid=Uid,ctime='_'}),
     % send Msg to them all
     M = {router_msg, Msg},
     io:format("pids~w~nAppid: ~w Uid, ~w ",[Pids,Appid,Uid]),
@@ -140,7 +143,7 @@ send_call (Appid, Uid,Msg,Offline) ->
             ok;
         _ ->
             io:format("~w",[Pids]),
-            [Pid ! M || {onlines,Pid,_,_} <- Pids]
+            [Pid ! M || {onlines,Pid,_,_,_,_} <- Pids]
     end.
 
 %%TODO
@@ -162,14 +165,14 @@ handle_call({get_online_ids,Appid}, _From, State) ->
     R=get_all_online_ids(Appid),
     {reply, R, State};
 
-handle_call({login,Appid, Uid, Pid,Offline}, _From, State) when is_pid(Pid) ->
-    {reply, login_call(Appid, Uid,Pid,Offline), State};
-handle_call({login, Appid, Id, Pid}, _From, State) when is_pid(Pid) ->
-    {reply,login_call(Id,Appid,Pid,false), State};
+handle_call({login,Appid, Type,  Uid, Pid,Offline}, _From, State) when is_pid(Pid) ->
+    {reply, login_call(Appid, Type,  Uid,Pid,Offline), State};
+handle_call({login, Appid, Type,  Id, Pid}, _From, State) when is_pid(Pid) ->
+    {reply,login_call(Id,Appid,Type, Pid,false), State};
 
 handle_call({logout, Pid}, _From, State) when is_pid(Pid) ->
     unlink(Pid),
-    PidRows = mnesia:dirty_match_object(#onlines{pid=Pid, appid='_',uid='_'}),
+    PidRows = mnesia:dirty_match_object(#onlines{pid=Pid, appid='_',type='_',uid='_',ctime='_'}),
     case PidRows of
         [] ->
             A = ok,
@@ -216,6 +219,7 @@ terminate(_Reason, _State) ->
     ok.
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
 
 first_run()->
    mnesia:create_schema([node()]),
