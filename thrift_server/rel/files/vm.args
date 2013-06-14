@@ -20,5 +20,3 @@
 -env ERL_FULLSWEEP_AFTER 10
 
 -P 134217727 
-
--leader 'ecomet_router@127.0.0.1' 

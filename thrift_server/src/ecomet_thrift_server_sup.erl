@@ -17,6 +17,9 @@
 %% ===================================================================
 
 start_link() ->
+    {ok,Leader} = application:get_env(leader),
+    net_adm:ping(Leader),
+    error_logger:info_msg("~w===================|||||||||||||||", [Leader]),
     io:format("=========================sup\n"),
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
@@ -26,5 +29,5 @@ start_link() ->
 
 init([]) ->
     io:format("=========================sup init\n"),
-    Children = [ ?CHILD(ecomet_thrift_server, worker) ],
+    Children = [ ?CHILD(ecomet_thrift_server_controller, worker) ],
     {ok, { {one_for_one, 5, 10}, Children} }.

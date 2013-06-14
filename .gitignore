@@ -20,3 +20,5 @@ router/mnesia/schema.DAT
 thrift_server/deps/jsx/
 
 thrift_server/deps/thrift/
+
+thrift_clients/.PhpClient.php.swp

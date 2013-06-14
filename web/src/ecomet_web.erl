@@ -60,6 +60,9 @@ loop(Req, DocRoot,Keepalive) ->
 
                         proc_lib:hibernate(?MODULE, resume, [Req,Id, Reentry, TimerRef]),
                         io:format("not gonna happen~n", []);
+                    "heathy/"           ->
+                        Json=mochijson2:encode(heathy()),
+                        okJson(Req, Json);
                     _ ->
                         io:format("DocRoot ~p\n", [DocRoot]),
                         Req:serve_file(Path, DocRoot)
@@ -131,7 +134,21 @@ msg_send(Req) ->
     Json=mochijson2:encode({struct, [{type,msg},{from,list_to_binary(F)}, {to, list_to_binary(T)},{msg,list_to_binary(M)}]}),
     rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, send,[1,T,Json]).
 
+okJson(Req,Response) ->
+    Req:ok({_ContentType = "application/json",
+            _Headers = [],
+            Response}).
+
+
 ok(Req, Response) ->
     Req:ok({_ContentType = "text/plain",
             _Headers = [],
             Response}).
+
+heathy () ->
+    [
+        {process_count,erlang:system_info(process_count)},
+        {cpu,erlang:system_info(cpu_topology)},
+        {memory, erlang:memory()},
+        {nodes, nodes()}
+    ].
