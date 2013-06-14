@@ -50,15 +50,23 @@ try {
   $client = new  etao\erouter\EcometRouterClient($protocol);
 
   $transport->open();
-    
-  for( $i=0;$i<100;$i++ ) {
-  $a = json_encode( array(
-      "from" =>  "系统消息",
-      "msg" => "令小湛" . $i,
-      "type" => "auction",
-  ) );
-      $client->send(1,'2',$a);
+    /**
+  for( $i=0;$i<1;$i++ ) {
+     */
+ $i =0;
+$a = json_encode( array(
+    "from" =>  "系统消息",
+    "msg" => "令小湛" . $i,
+    "type" => "auction",
+) );
+     $client->send(1,'2',$a);
+  /*
   }
+  */
+  $list = $client->get_online_ids(1);
+  var_dump( $list );
+  $list = $client->get_online_count(1);
+  var_dump( $list );
 
   $transport->close();
     $socket->close( );

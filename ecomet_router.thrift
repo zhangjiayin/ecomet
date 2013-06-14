@@ -12,5 +12,7 @@ struct Message {
 
 
 service EcometRouter {
-    oneway void send(1:string AppId, 2:string Id, 3:string Msg)
+    oneway void send(1:string AppId, 2:string Id, 3:string Msg),
+    i32 get_online_count(1:string AppId),
+    list<string> get_online_ids(1:string AppId)
 }

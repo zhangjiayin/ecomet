@@ -25,5 +25,23 @@ function_info('send', reply_type) ->
 function_info('send', exceptions) ->
   {struct, []}
 ;
+% get_online_count(This, AppId)
+function_info('get_online_count', params_type) ->
+  {struct, [{1, string}]}
+;
+function_info('get_online_count', reply_type) ->
+  i32;
+function_info('get_online_count', exceptions) ->
+  {struct, []}
+;
+% get_online_ids(This, AppId)
+function_info('get_online_ids', params_type) ->
+  {struct, [{1, string}]}
+;
+function_info('get_online_ids', reply_type) ->
+  {list, string};
+function_info('get_online_ids', exceptions) ->
+  {struct, []}
+;
 function_info(_Func, _Info) -> no_function.
 
