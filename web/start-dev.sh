@@ -8,6 +8,7 @@ exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
     --hidden \
     -P 134217727 \
     -s ecomet \
+    -s lager \
     -s reloader
     #-mnesia dir '"/Users/zhangjiayin/dev/OpensourceSoftware/mochiweb/mnesia"' \
    #-sname ecomet_dev \
