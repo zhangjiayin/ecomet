@@ -47,7 +47,7 @@ loop(Req, DocRoot,Keepalive) ->
                                 Json});
                     "ecomet/" ++ Id ->
                         Response = Req:ok({"text/html; charset=utf-8",
-                                [{"Server","Mochiweb-Test"}],
+                                [{"Server","ECOMET"}],
                                 chunked}),
                         erlang:send_after(?WAITTIME, self(), "ping"),
                         rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1, Id,self(),true]),
