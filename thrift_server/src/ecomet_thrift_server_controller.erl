@@ -26,7 +26,7 @@ stop(Server) ->
 %%%%% THRIFT INTERFACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 handle_function(Function, Args) when is_atom(Function), is_tuple(Args) ->
-    lager:log(info,"Function : ~w, arag ~w ", [Function,tuple_to_list(Args)]),
+    error_logger:info_msg("Function : ~w, arag ~w ", [Function,tuple_to_list(Args)]),
     case apply(?MODULE, Function, tuple_to_list(Args)) of
         ok -> ok;
         Reply -> {reply, Reply}
@@ -51,5 +51,5 @@ get_port() ->
     9999.
     %%{ok, Result} = application:get_env(ecomet_thrift_server, service_port),
 handle_error(Function , Reason) ->
-    lager:log(info,"Function: ~w, Reason~w ~n", [Function,Reason]),
+    error_logger:info_msg("Function: ~w, Reason~w ~n", [Function,Reason]),
     ok.
