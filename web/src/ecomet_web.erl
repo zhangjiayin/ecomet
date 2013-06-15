@@ -28,7 +28,7 @@ stop() ->
     mochiweb_http:stop(?MODULE).
 
 loop(Req, DocRoot,Keepalive) ->
-    lager:log(info,"keepalive ~w\n", [Keepalive]),
+    error_logger:info_msg("keepalive ~w\n", [Keepalive]),
     process_flag(trap_exit, true),
     "/" ++ Path = Req:get(path),
     try
@@ -38,8 +38,6 @@ loop(Req, DocRoot,Keepalive) ->
                     "get_online_ids/" ++ _Id ->
                         Ids = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_ids,[1]),
                         IdCount = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_count,[1]),
-                        lager:info("get_online_ids ~w", [Ids]),
-                        lager:info("get id count ~w", [IdCount]),
                         Json=mochijson2:encode({struct, [{ids,  [ list_to_binary(Iid)  ||Iid <-Ids]}, {count,IdCount }]}),
 
                         Req:ok({_ContentType = "application/json",
@@ -62,7 +60,7 @@ loop(Req, DocRoot,Keepalive) ->
                         Json=mochijson2:encode(heathy()),
                         okJson(Req, Json);
                     _ ->
-                        lager:info("DocRoot ~p\n", [DocRoot]),
+                        error_logger:info_msg("DocRoot ~p\n", [DocRoot]),
                         Req:serve_file(Path, DocRoot)
                 end;
             'POST' ->
@@ -82,7 +80,7 @@ loop(Req, DocRoot,Keepalive) ->
                       {path, Path},
                       {type, Type}, {what, What},
                       {trace, erlang:get_stacktrace()}],
-                  lager:info(Report),
+            error_logger:info_msg("error", [Report]),
             Req:respond({500, [{"Content-Type", "text/plain"}],
                          "request failed, sorry\n"})
     end.
@@ -94,7 +92,7 @@ feed(Response,Id,N) ->
         Html = io_lib:format("Recvd msg #~w: '~s'", [N, Msg]),
         Response:write_chunk(Html);
     Msg1 ->
-        lager:info("Msg1 ~w",[Msg1]),
+        error_logger:info_msg("Msg1 ~w",[Msg1]),
         ok
     after 1000 ->
             ok
@@ -102,7 +100,7 @@ feed(Response,Id,N) ->
     proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]).
 
 resume(Req, Id, Reentry,TimerRef) ->
-    lager:info("resume/4"),
+    error_logger:info_msg("resume/4"),
     receive
         {router_msg, Msg} ->
             erlang:cancel_timer(TimerRef),
@@ -120,7 +118,7 @@ resume(Req, Id, Reentry,TimerRef) ->
             ok(Req, Json)
     end,
 
-    lager:info("reentering loop via continuation in ~p~n", [Req:get(path)]),
+    error_logger:info_msg("reentering loop via continuation in ~p~n", [Req:get(path)]),
     Reentry(Req).
 
 msg_send(Req) ->

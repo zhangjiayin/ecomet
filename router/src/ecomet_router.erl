@@ -94,7 +94,7 @@ logout(Pid) when is_pid(Pid) ->
 init([]) ->
     process_flag(trap_exit, true),
     ok = mnesia:start(),
-    io:format("Waiting on mnesia tables..\n",[]),
+    error_logger:info_msg("Waiting on mnesia tables..\n",[]),
     mnesia:wait_for_tables([?TABLE_ONLINE], 30000),
     Info = mnesia:table_info(?TABLE_ONLINE, all),
     error_logger:info_msg("OK. Subscription table info: \n~w\n",[Info]),
@@ -111,14 +111,14 @@ login_call(Appid, Type, Uid, Pid,Offline) when is_pid(Pid) ->
     case Offline of
         true ->
             Msgs = ecomet_offline:get_msg(Appid, Uid),
-            io:format("Msgs ~w\n",[Msgs]),
+            error_logger:info_msg("Msgs ~w\n",[Msgs]),
             case Msgs of
                 [] ->
                     ok;
                 ok ->
                     ok;
                 _->
-                    io:format("Msgs ~w~n", Msgs),
+                    error_logger:info_msg("Msgs ~w~n", Msgs),
                     [ Pid ! {router_msg, Msg} || Msg <- Msgs ],
                     ecomet_offline:delete(Appid, Uid),
                     ok
@@ -131,7 +131,7 @@ send_call (Appid, Uid,Msg,Offline) ->
     Pids = mnesia:dirty_match_object(#onlines{pid='_', appid=Appid,type='_', uid=Uid,ctime='_'}),
     % send Msg to them all
     M = {router_msg, Msg},
-    io:format("pids~w~nAppid: ~w Uid, ~w ",[Pids,Appid,Uid]),
+    error_logger:info_msg("pids~w~nAppid: ~w Uid, ~w ",[Pids,Appid,Uid]),
     case Pids of
         [] ->
             case Offline of
@@ -142,7 +142,7 @@ send_call (Appid, Uid,Msg,Offline) ->
             end,
             ok;
         _ ->
-            io:format("~w",[Pids]),
+            error_logger:info_msg("~w",[Pids]),
             [Pid ! M || {onlines,Pid,_,_,_,_} <- Pids]
     end.
 
@@ -205,11 +205,11 @@ handle_call({send, Appid, Id, Msg}, _From, State) ->
 handle_info(Info, State) ->
     case Info of
         {'EXIT', Pid, Why} ->
-            io:format("Why exit ~w~n", [ Why]),
+            error_logger:info_msg("Why exit ~w~n", [ Why]),
             % force logout:
             handle_call({logout, Pid}, blah, State);
         Wtf ->
-            io:format("Caught unhandled message: ~w\n", [Wtf])
+            error_logger:info_msg("Caught unhandled message: ~w\n", [Wtf])
     end,
     {noreply, State}.
 

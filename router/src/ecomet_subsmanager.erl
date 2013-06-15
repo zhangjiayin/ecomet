@@ -38,10 +38,10 @@ get_subscribers(Appid,User) ->
 
 init([]) ->
     ok = mnesia:start(),
-    io:format("Waiting on mnesia tables..\n",[]),
+    error_logger:info_msg("Waiting on mnesia tables..\n",[]),
     mnesia:wait_for_tables([subscription], 30000),
     Info = mnesia:table_info(subscription, all),
-    io:format("OK. Subscription table info: \n~w\n\n",[Info]),
+    error_logger:info_msg("OK. Subscription table info: \n~w\n\n",[Info]),
     {ok, #state{} }.
 
 handle_call({stop}, _From, State) ->
@@ -66,7 +66,7 @@ handle_call({remove_subscriptions, Appid, SubsList}, _From, State) ->
 handle_call({get_subscribers,Appid, User}, From, State) ->
     F = fun() ->
         Subs = mnesia:dirty_match_object(#subscription{subscriber='_', appid=Appid, subscribee=User}),
-        io:format("~w",[Subs]),
+        error_logger:info_msg("~w",[Subs]),
         Users = [Dude || #subscription{subscriber=Dude, appid=_, subscribee=_} <- Subs],
         gen_server:reply(From, Users)
     end,
@@ -81,7 +81,7 @@ terminate(_Reason, _State) ->
     ok.
 
 code_change(_OldVersion, State, _Extra) ->
-    io:format("Reloading code for ?MODULE\n",[]),
+    error_logger:info_msg("Reloading code for ?MODULE\n",[]),
     {ok, State}.
 
 

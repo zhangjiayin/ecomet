@@ -4,10 +4,11 @@ exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
     -name "ecomet_router@127.0.0.1" \
     -setcookie abc \
     -mnesia dir '"./mnesia"' \
-    -config erouter.config \
+    -config ../ecomet.config \
     -K true \
     -P 134217727 \
     -s mnesia start  \
+    -s lager  \
     -s ecomet_router_app
    # -s reloader
  #   -config erouter.config \

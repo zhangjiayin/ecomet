@@ -3,7 +3,7 @@
 exec erl -pa ebin edit deps/*/ebin -boot start_sasl \
     -name "n1@127.0.0.1" \
     -setcookie abc \
-    -config ecomet_web.config \
+    -config  ../ecomet.config \
     -K true \
     --hidden \
     -P 134217727 \

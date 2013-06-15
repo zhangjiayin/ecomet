@@ -26,7 +26,7 @@ stop(Server) ->
 %%%%% THRIFT INTERFACE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 handle_function(Function, Args) when is_atom(Function), is_tuple(Args) ->
-    io:format("Function : ~w, arag ~w ", [Function,tuple_to_list(Args)]),
+    lager:log(info,"Function : ~w, arag ~w ", [Function,tuple_to_list(Args)]),
     case apply(?MODULE, Function, tuple_to_list(Args)) of
         ok -> ok;
         Reply -> {reply, Reply}
@@ -35,11 +35,9 @@ handle_function(Function, Args) when is_atom(Function), is_tuple(Args) ->
 %%%%% HELPER FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 send(Appid, Id, Msg)->
-    io:format("Appid,~w Id: ~w, Msg ~w ~n", [Appid, Id,Msg]),
     gen_server:call(pg2:get_closest_pid(erouter), {send,list_to_integer(binary_to_list(Appid)),binary_to_list(Id),binary_to_list(Msg)}),
     ok.
 send(Appid, Id,Msg,Offline)->
-    io:format("Id: ~w, Msg ~w Offline ~w~n", [Id,Msg,Offline]),
     gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,Msg,Offline}),
     ok.
 
@@ -52,7 +50,6 @@ get_online_ids(Appid) ->
 get_port() ->
     9999.
     %%{ok, Result} = application:get_env(ecomet_thrift_server, service_port),
-    %%Result.
 handle_error(Function , Reason) ->
-    %%io:format("Function: ~w, Reason~w ~n", [Function,Reason]),
+    lager:log(info,"Function: ~w, Reason~w ~n", [Function,Reason]),
     ok.

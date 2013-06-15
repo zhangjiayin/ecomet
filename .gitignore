@@ -28,3 +28,13 @@ router/mnesia/DECISION_TAB.LOG
 router/mnesia/DECISION_TAB.LOG
 
 router/mnesia/DECISION_TAB.LOG
+
+*.log
+
+thrift_server/deps/goldrush/
+
+thrift_server/deps/lager/
+
+router/deps/lager/
+
+router/deps/goldrush/

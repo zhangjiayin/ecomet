@@ -21,6 +21,7 @@ ensure_started(App) ->
 start() ->
     %%ecomet_deps:ensure(),
     ensure_started(crypto),
+    ensure_started(lager),
     application:start(ecomet_thrift_server).
 
 

@@ -36,10 +36,10 @@ delete(Appid, Id) ->
 init([]) ->
     process_flag(trap_exit, true),
     ok = mnesia:start(),
-    io:format("Waiting on mnesia tables..\n",[]),
+    error_logger:info_msg("Waiting on mnesia tables..\n",[]),
     mnesia:wait_for_tables([offline_msg], 30000),
     Info = mnesia:table_info(?TABLE_OFFLINE, all),
-    io:format("OK. Subscription table info: \n~w\n\n",[Info]),
+    error_logger:info_msg("OK. Subscription table info: \n~w\n\n",[Info]),
     {ok, #state{} }.
 
 handle_call({store, Appid, Id, Msg}, _From, State)  ->
