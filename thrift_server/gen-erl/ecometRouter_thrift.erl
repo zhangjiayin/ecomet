@@ -14,11 +14,12 @@
 
 struct_info('i am a dummy struct') -> undefined.
 %%% interface
-% send(This, AppId, Id, Msg)
+% send(This, AppId, Id, Msg, Offline)
 function_info('send', params_type) ->
-  {struct, [{1, string},
-          {2, string},
-          {3, string}]}
+  {struct, [{1, i64},
+          {2, i64},
+          {3, string},
+          {4, bool}]}
 ;
 function_info('send', reply_type) ->
   oneway_void;
@@ -27,19 +28,19 @@ function_info('send', exceptions) ->
 ;
 % get_online_count(This, AppId)
 function_info('get_online_count', params_type) ->
-  {struct, [{1, string}]}
+  {struct, [{1, i32}]}
 ;
 function_info('get_online_count', reply_type) ->
-  i32;
+  i64;
 function_info('get_online_count', exceptions) ->
   {struct, []}
 ;
 % get_online_ids(This, AppId)
 function_info('get_online_ids', params_type) ->
-  {struct, [{1, string}]}
+  {struct, [{1, i32}]}
 ;
 function_info('get_online_ids', reply_type) ->
-  {list, string};
+  {list, i64};
 function_info('get_online_ids', exceptions) ->
   {struct, []}
 ;

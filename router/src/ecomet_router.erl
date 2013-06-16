@@ -4,7 +4,7 @@
 -include_lib("stdlib/include/qlc.hrl").
 -export([start_link/0, start/0]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-        terminate/2, code_change/3, first_run/0]).
+        terminate/2, code_change/3, first_run/0, sync_db/1]).
 
 -export([send/3,send/4,publish/3,publish/4,login/4,login/5, logout/1, get_online_count/1, get_online_ids/1]).
 
@@ -17,7 +17,7 @@
 -record(onlines, {pid, appid, type, uid, ctime}).
 
 start() ->
-    start_link().
+    ?MODULE:start_link().
 
 start_link() ->
     mnesia:start(),
@@ -32,10 +32,10 @@ start_link() ->
                  true ->
                      mnesia:stop(),
                      mnesia:delete_schema([node()]),
-                     first_run();
+                     ?MODULE:first_run();
                  _ ->
                      error_logger:info_msg("==================I'm slave"),
-                     sync_db(Leader),
+                     ?MODULE:sync_db(Leader),
                      ok
              end;
          _  ->

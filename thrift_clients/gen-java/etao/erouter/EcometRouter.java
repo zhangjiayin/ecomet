@@ -41,21 +41,21 @@ public class EcometRouter {
    */
   public interface Iface {
 
-    public void send(String AppId, String Id, String Msg) throws org.apache.thrift.TException;
+    public void send(long AppId, long Id, String Msg, boolean Offline) throws org.apache.thrift.TException;
 
-    public int get_online_count(String AppId) throws org.apache.thrift.TException;
+    public long get_online_count(int AppId) throws org.apache.thrift.TException;
 
-    public List<String> get_online_ids(String AppId) throws org.apache.thrift.TException;
+    public List<Long> get_online_ids(int AppId) throws org.apache.thrift.TException;
 
   }
 
   public interface AsyncIface {
 
-    public void send(String AppId, String Id, String Msg, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.send_call> resultHandler) throws org.apache.thrift.TException;
+    public void send(long AppId, long Id, String Msg, boolean Offline, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.send_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get_online_count(String AppId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_online_count_call> resultHandler) throws org.apache.thrift.TException;
+    public void get_online_count(int AppId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_online_count_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get_online_ids(String AppId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_online_ids_call> resultHandler) throws org.apache.thrift.TException;
+    public void get_online_ids(int AppId, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_online_ids_call> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -79,34 +79,35 @@ public class EcometRouter {
       super(iprot, oprot);
     }
 
-    public void send(String AppId, String Id, String Msg) throws org.apache.thrift.TException
+    public void send(long AppId, long Id, String Msg, boolean Offline) throws org.apache.thrift.TException
     {
-      send_send(AppId, Id, Msg);
+      send_send(AppId, Id, Msg, Offline);
     }
 
-    public void send_send(String AppId, String Id, String Msg) throws org.apache.thrift.TException
+    public void send_send(long AppId, long Id, String Msg, boolean Offline) throws org.apache.thrift.TException
     {
       send_args args = new send_args();
       args.setAppId(AppId);
       args.setId(Id);
       args.setMsg(Msg);
+      args.setOffline(Offline);
       sendBase("send", args);
     }
 
-    public int get_online_count(String AppId) throws org.apache.thrift.TException
+    public long get_online_count(int AppId) throws org.apache.thrift.TException
     {
       send_get_online_count(AppId);
       return recv_get_online_count();
     }
 
-    public void send_get_online_count(String AppId) throws org.apache.thrift.TException
+    public void send_get_online_count(int AppId) throws org.apache.thrift.TException
     {
       get_online_count_args args = new get_online_count_args();
       args.setAppId(AppId);
       sendBase("get_online_count", args);
     }
 
-    public int recv_get_online_count() throws org.apache.thrift.TException
+    public long recv_get_online_count() throws org.apache.thrift.TException
     {
       get_online_count_result result = new get_online_count_result();
       receiveBase(result, "get_online_count");
@@ -116,20 +117,20 @@ public class EcometRouter {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get_online_count failed: unknown result");
     }
 
-    public List<String> get_online_ids(String AppId) throws org.apache.thrift.TException
+    public List<Long> get_online_ids(int AppId) throws org.apache.thrift.TException
     {
       send_get_online_ids(AppId);
       return recv_get_online_ids();
     }
 
-    public void send_get_online_ids(String AppId) throws org.apache.thrift.TException
+    public void send_get_online_ids(int AppId) throws org.apache.thrift.TException
     {
       get_online_ids_args args = new get_online_ids_args();
       args.setAppId(AppId);
       sendBase("get_online_ids", args);
     }
 
-    public List<String> recv_get_online_ids() throws org.apache.thrift.TException
+    public List<Long> recv_get_online_ids() throws org.apache.thrift.TException
     {
       get_online_ids_result result = new get_online_ids_result();
       receiveBase(result, "get_online_ids");
@@ -157,22 +158,24 @@ public class EcometRouter {
       super(protocolFactory, clientManager, transport);
     }
 
-    public void send(String AppId, String Id, String Msg, org.apache.thrift.async.AsyncMethodCallback<send_call> resultHandler) throws org.apache.thrift.TException {
+    public void send(long AppId, long Id, String Msg, boolean Offline, org.apache.thrift.async.AsyncMethodCallback<send_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      send_call method_call = new send_call(AppId, Id, Msg, resultHandler, this, ___protocolFactory, ___transport);
+      send_call method_call = new send_call(AppId, Id, Msg, Offline, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class send_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String AppId;
-      private String Id;
+      private long AppId;
+      private long Id;
       private String Msg;
-      public send_call(String AppId, String Id, String Msg, org.apache.thrift.async.AsyncMethodCallback<send_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private boolean Offline;
+      public send_call(long AppId, long Id, String Msg, boolean Offline, org.apache.thrift.async.AsyncMethodCallback<send_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, true);
         this.AppId = AppId;
         this.Id = Id;
         this.Msg = Msg;
+        this.Offline = Offline;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -181,6 +184,7 @@ public class EcometRouter {
         args.setAppId(AppId);
         args.setId(Id);
         args.setMsg(Msg);
+        args.setOffline(Offline);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -194,7 +198,7 @@ public class EcometRouter {
       }
     }
 
-    public void get_online_count(String AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_count_call> resultHandler) throws org.apache.thrift.TException {
+    public void get_online_count(int AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_count_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       get_online_count_call method_call = new get_online_count_call(AppId, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -202,8 +206,8 @@ public class EcometRouter {
     }
 
     public static class get_online_count_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String AppId;
-      public get_online_count_call(String AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_count_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int AppId;
+      public get_online_count_call(int AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_count_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.AppId = AppId;
       }
@@ -216,7 +220,7 @@ public class EcometRouter {
         prot.writeMessageEnd();
       }
 
-      public int getResult() throws org.apache.thrift.TException {
+      public long getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -226,7 +230,7 @@ public class EcometRouter {
       }
     }
 
-    public void get_online_ids(String AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_ids_call> resultHandler) throws org.apache.thrift.TException {
+    public void get_online_ids(int AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_ids_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       get_online_ids_call method_call = new get_online_ids_call(AppId, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -234,8 +238,8 @@ public class EcometRouter {
     }
 
     public static class get_online_ids_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private String AppId;
-      public get_online_ids_call(String AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_ids_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int AppId;
+      public get_online_ids_call(int AppId, org.apache.thrift.async.AsyncMethodCallback<get_online_ids_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.AppId = AppId;
       }
@@ -248,7 +252,7 @@ public class EcometRouter {
         prot.writeMessageEnd();
       }
 
-      public List<String> getResult() throws org.apache.thrift.TException {
+      public List<Long> getResult() throws org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -291,7 +295,7 @@ public class EcometRouter {
       }
 
       public org.apache.thrift.TBase getResult(I iface, send_args args) throws org.apache.thrift.TException {
-        iface.send(args.AppId, args.Id, args.Msg);
+        iface.send(args.AppId, args.Id, args.Msg, args.Offline);
         return null;
       }
     }
@@ -342,9 +346,10 @@ public class EcometRouter {
   public static class send_args implements org.apache.thrift.TBase<send_args, send_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("send_args");
 
-    private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("AppId", org.apache.thrift.protocol.TType.STRING, (short)1);
-    private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("Id", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("AppId", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("Id", org.apache.thrift.protocol.TType.I64, (short)2);
     private static final org.apache.thrift.protocol.TField MSG_FIELD_DESC = new org.apache.thrift.protocol.TField("Msg", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField OFFLINE_FIELD_DESC = new org.apache.thrift.protocol.TField("Offline", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -352,15 +357,17 @@ public class EcometRouter {
       schemes.put(TupleScheme.class, new send_argsTupleSchemeFactory());
     }
 
-    public String AppId; // required
-    public String Id; // required
+    public long AppId; // required
+    public long Id; // required
     public String Msg; // required
+    public boolean Offline; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       APP_ID((short)1, "AppId"),
       ID((short)2, "Id"),
-      MSG((short)3, "Msg");
+      MSG((short)3, "Msg"),
+      OFFLINE((short)4, "Offline");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -381,6 +388,8 @@ public class EcometRouter {
             return ID;
           case 3: // MSG
             return MSG;
+          case 4: // OFFLINE
+            return OFFLINE;
           default:
             return null;
         }
@@ -421,46 +430,57 @@ public class EcometRouter {
     }
 
     // isset id assignments
+    private static final int __APPID_ISSET_ID = 0;
+    private static final int __ID_ISSET_ID = 1;
+    private static final int __OFFLINE_ISSET_ID = 2;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.APP_ID, new org.apache.thrift.meta_data.FieldMetaData("AppId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("Id", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       tmpMap.put(_Fields.MSG, new org.apache.thrift.meta_data.FieldMetaData("Msg", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.OFFLINE, new org.apache.thrift.meta_data.FieldMetaData("Offline", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(send_args.class, metaDataMap);
     }
 
     public send_args() {
+      this.Offline = false;
+
     }
 
     public send_args(
-      String AppId,
-      String Id,
-      String Msg)
+      long AppId,
+      long Id,
+      String Msg,
+      boolean Offline)
     {
       this();
       this.AppId = AppId;
+      setAppIdIsSet(true);
       this.Id = Id;
+      setIdIsSet(true);
       this.Msg = Msg;
+      this.Offline = Offline;
+      setOfflineIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public send_args(send_args other) {
-      if (other.isSetAppId()) {
-        this.AppId = other.AppId;
-      }
-      if (other.isSetId()) {
-        this.Id = other.Id;
-      }
+      __isset_bitfield = other.__isset_bitfield;
+      this.AppId = other.AppId;
+      this.Id = other.Id;
       if (other.isSetMsg()) {
         this.Msg = other.Msg;
       }
+      this.Offline = other.Offline;
     }
 
     public send_args deepCopy() {
@@ -469,57 +489,59 @@ public class EcometRouter {
 
     @Override
     public void clear() {
-      this.AppId = null;
-      this.Id = null;
+      setAppIdIsSet(false);
+      this.AppId = 0;
+      setIdIsSet(false);
+      this.Id = 0;
       this.Msg = null;
+      this.Offline = false;
+
     }
 
-    public String getAppId() {
+    public long getAppId() {
       return this.AppId;
     }
 
-    public send_args setAppId(String AppId) {
+    public send_args setAppId(long AppId) {
       this.AppId = AppId;
+      setAppIdIsSet(true);
       return this;
     }
 
     public void unsetAppId() {
-      this.AppId = null;
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __APPID_ISSET_ID);
     }
 
     /** Returns true if field AppId is set (has been assigned a value) and false otherwise */
     public boolean isSetAppId() {
-      return this.AppId != null;
+      return EncodingUtils.testBit(__isset_bitfield, __APPID_ISSET_ID);
     }
 
     public void setAppIdIsSet(boolean value) {
-      if (!value) {
-        this.AppId = null;
-      }
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __APPID_ISSET_ID, value);
     }
 
-    public String getId() {
+    public long getId() {
       return this.Id;
     }
 
-    public send_args setId(String Id) {
+    public send_args setId(long Id) {
       this.Id = Id;
+      setIdIsSet(true);
       return this;
     }
 
     public void unsetId() {
-      this.Id = null;
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __ID_ISSET_ID);
     }
 
     /** Returns true if field Id is set (has been assigned a value) and false otherwise */
     public boolean isSetId() {
-      return this.Id != null;
+      return EncodingUtils.testBit(__isset_bitfield, __ID_ISSET_ID);
     }
 
     public void setIdIsSet(boolean value) {
-      if (!value) {
-        this.Id = null;
-      }
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __ID_ISSET_ID, value);
     }
 
     public String getMsg() {
@@ -546,13 +568,36 @@ public class EcometRouter {
       }
     }
 
+    public boolean isOffline() {
+      return this.Offline;
+    }
+
+    public send_args setOffline(boolean Offline) {
+      this.Offline = Offline;
+      setOfflineIsSet(true);
+      return this;
+    }
+
+    public void unsetOffline() {
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __OFFLINE_ISSET_ID);
+    }
+
+    /** Returns true if field Offline is set (has been assigned a value) and false otherwise */
+    public boolean isSetOffline() {
+      return EncodingUtils.testBit(__isset_bitfield, __OFFLINE_ISSET_ID);
+    }
+
+    public void setOfflineIsSet(boolean value) {
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __OFFLINE_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case APP_ID:
         if (value == null) {
           unsetAppId();
         } else {
-          setAppId((String)value);
+          setAppId((Long)value);
         }
         break;
 
@@ -560,7 +605,7 @@ public class EcometRouter {
         if (value == null) {
           unsetId();
         } else {
-          setId((String)value);
+          setId((Long)value);
         }
         break;
 
@@ -572,19 +617,30 @@ public class EcometRouter {
         }
         break;
 
+      case OFFLINE:
+        if (value == null) {
+          unsetOffline();
+        } else {
+          setOffline((Boolean)value);
+        }
+        break;
+
       }
     }
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case APP_ID:
-        return getAppId();
+        return Long.valueOf(getAppId());
 
       case ID:
-        return getId();
+        return Long.valueOf(getId());
 
       case MSG:
         return getMsg();
+
+      case OFFLINE:
+        return Boolean.valueOf(isOffline());
 
       }
       throw new IllegalStateException();
@@ -603,6 +659,8 @@ public class EcometRouter {
         return isSetId();
       case MSG:
         return isSetMsg();
+      case OFFLINE:
+        return isSetOffline();
       }
       throw new IllegalStateException();
     }
@@ -620,21 +678,21 @@ public class EcometRouter {
       if (that == null)
         return false;
 
-      boolean this_present_AppId = true && this.isSetAppId();
-      boolean that_present_AppId = true && that.isSetAppId();
+      boolean this_present_AppId = true;
+      boolean that_present_AppId = true;
       if (this_present_AppId || that_present_AppId) {
         if (!(this_present_AppId && that_present_AppId))
           return false;
-        if (!this.AppId.equals(that.AppId))
+        if (this.AppId != that.AppId)
           return false;
       }
 
-      boolean this_present_Id = true && this.isSetId();
-      boolean that_present_Id = true && that.isSetId();
+      boolean this_present_Id = true;
+      boolean that_present_Id = true;
       if (this_present_Id || that_present_Id) {
         if (!(this_present_Id && that_present_Id))
           return false;
-        if (!this.Id.equals(that.Id))
+        if (this.Id != that.Id)
           return false;
       }
 
@@ -644,6 +702,15 @@ public class EcometRouter {
         if (!(this_present_Msg && that_present_Msg))
           return false;
         if (!this.Msg.equals(that.Msg))
+          return false;
+      }
+
+      boolean this_present_Offline = true;
+      boolean that_present_Offline = true;
+      if (this_present_Offline || that_present_Offline) {
+        if (!(this_present_Offline && that_present_Offline))
+          return false;
+        if (this.Offline != that.Offline)
           return false;
       }
 
@@ -693,6 +760,16 @@ public class EcometRouter {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetOffline()).compareTo(typedOther.isSetOffline());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetOffline()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.Offline, typedOther.Offline);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -714,19 +791,11 @@ public class EcometRouter {
       boolean first = true;
 
       sb.append("AppId:");
-      if (this.AppId == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.AppId);
-      }
+      sb.append(this.AppId);
       first = false;
       if (!first) sb.append(", ");
       sb.append("Id:");
-      if (this.Id == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.Id);
-      }
+      sb.append(this.Id);
       first = false;
       if (!first) sb.append(", ");
       sb.append("Msg:");
@@ -735,6 +804,10 @@ public class EcometRouter {
       } else {
         sb.append(this.Msg);
       }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("Offline:");
+      sb.append(this.Offline);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -755,6 +828,8 @@ public class EcometRouter {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -780,16 +855,16 @@ public class EcometRouter {
           }
           switch (schemeField.id) {
             case 1: // APP_ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.AppId = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.AppId = iprot.readI64();
                 struct.setAppIdIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
             case 2: // ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.Id = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.Id = iprot.readI64();
                 struct.setIdIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -799,6 +874,14 @@ public class EcometRouter {
               if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
                 struct.Msg = iprot.readString();
                 struct.setMsgIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
+            case 4: // OFFLINE
+              if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+                struct.Offline = iprot.readBool();
+                struct.setOfflineIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
@@ -818,21 +901,20 @@ public class EcometRouter {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.AppId != null) {
-          oprot.writeFieldBegin(APP_ID_FIELD_DESC);
-          oprot.writeString(struct.AppId);
-          oprot.writeFieldEnd();
-        }
-        if (struct.Id != null) {
-          oprot.writeFieldBegin(ID_FIELD_DESC);
-          oprot.writeString(struct.Id);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(APP_ID_FIELD_DESC);
+        oprot.writeI64(struct.AppId);
+        oprot.writeFieldEnd();
+        oprot.writeFieldBegin(ID_FIELD_DESC);
+        oprot.writeI64(struct.Id);
+        oprot.writeFieldEnd();
         if (struct.Msg != null) {
           oprot.writeFieldBegin(MSG_FIELD_DESC);
           oprot.writeString(struct.Msg);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(OFFLINE_FIELD_DESC);
+        oprot.writeBool(struct.Offline);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -860,33 +942,43 @@ public class EcometRouter {
         if (struct.isSetMsg()) {
           optionals.set(2);
         }
-        oprot.writeBitSet(optionals, 3);
+        if (struct.isSetOffline()) {
+          optionals.set(3);
+        }
+        oprot.writeBitSet(optionals, 4);
         if (struct.isSetAppId()) {
-          oprot.writeString(struct.AppId);
+          oprot.writeI64(struct.AppId);
         }
         if (struct.isSetId()) {
-          oprot.writeString(struct.Id);
+          oprot.writeI64(struct.Id);
         }
         if (struct.isSetMsg()) {
           oprot.writeString(struct.Msg);
+        }
+        if (struct.isSetOffline()) {
+          oprot.writeBool(struct.Offline);
         }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, send_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
+        BitSet incoming = iprot.readBitSet(4);
         if (incoming.get(0)) {
-          struct.AppId = iprot.readString();
+          struct.AppId = iprot.readI64();
           struct.setAppIdIsSet(true);
         }
         if (incoming.get(1)) {
-          struct.Id = iprot.readString();
+          struct.Id = iprot.readI64();
           struct.setIdIsSet(true);
         }
         if (incoming.get(2)) {
           struct.Msg = iprot.readString();
           struct.setMsgIsSet(true);
+        }
+        if (incoming.get(3)) {
+          struct.Offline = iprot.readBool();
+          struct.setOfflineIsSet(true);
         }
       }
     }
@@ -896,7 +988,7 @@ public class EcometRouter {
   public static class get_online_count_args implements org.apache.thrift.TBase<get_online_count_args, get_online_count_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_online_count_args");
 
-    private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("AppId", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("AppId", org.apache.thrift.protocol.TType.I32, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -904,7 +996,7 @@ public class EcometRouter {
       schemes.put(TupleScheme.class, new get_online_count_argsTupleSchemeFactory());
     }
 
-    public String AppId; // required
+    public int AppId; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -965,11 +1057,13 @@ public class EcometRouter {
     }
 
     // isset id assignments
+    private static final int __APPID_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.APP_ID, new org.apache.thrift.meta_data.FieldMetaData("AppId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_online_count_args.class, metaDataMap);
     }
@@ -978,19 +1072,19 @@ public class EcometRouter {
     }
 
     public get_online_count_args(
-      String AppId)
+      int AppId)
     {
       this();
       this.AppId = AppId;
+      setAppIdIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_online_count_args(get_online_count_args other) {
-      if (other.isSetAppId()) {
-        this.AppId = other.AppId;
-      }
+      __isset_bitfield = other.__isset_bitfield;
+      this.AppId = other.AppId;
     }
 
     public get_online_count_args deepCopy() {
@@ -999,31 +1093,31 @@ public class EcometRouter {
 
     @Override
     public void clear() {
-      this.AppId = null;
+      setAppIdIsSet(false);
+      this.AppId = 0;
     }
 
-    public String getAppId() {
+    public int getAppId() {
       return this.AppId;
     }
 
-    public get_online_count_args setAppId(String AppId) {
+    public get_online_count_args setAppId(int AppId) {
       this.AppId = AppId;
+      setAppIdIsSet(true);
       return this;
     }
 
     public void unsetAppId() {
-      this.AppId = null;
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __APPID_ISSET_ID);
     }
 
     /** Returns true if field AppId is set (has been assigned a value) and false otherwise */
     public boolean isSetAppId() {
-      return this.AppId != null;
+      return EncodingUtils.testBit(__isset_bitfield, __APPID_ISSET_ID);
     }
 
     public void setAppIdIsSet(boolean value) {
-      if (!value) {
-        this.AppId = null;
-      }
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __APPID_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -1032,7 +1126,7 @@ public class EcometRouter {
         if (value == null) {
           unsetAppId();
         } else {
-          setAppId((String)value);
+          setAppId((Integer)value);
         }
         break;
 
@@ -1042,7 +1136,7 @@ public class EcometRouter {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case APP_ID:
-        return getAppId();
+        return Integer.valueOf(getAppId());
 
       }
       throw new IllegalStateException();
@@ -1074,12 +1168,12 @@ public class EcometRouter {
       if (that == null)
         return false;
 
-      boolean this_present_AppId = true && this.isSetAppId();
-      boolean that_present_AppId = true && that.isSetAppId();
+      boolean this_present_AppId = true;
+      boolean that_present_AppId = true;
       if (this_present_AppId || that_present_AppId) {
         if (!(this_present_AppId && that_present_AppId))
           return false;
-        if (!this.AppId.equals(that.AppId))
+        if (this.AppId != that.AppId)
           return false;
       }
 
@@ -1130,11 +1224,7 @@ public class EcometRouter {
       boolean first = true;
 
       sb.append("AppId:");
-      if (this.AppId == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.AppId);
-      }
+      sb.append(this.AppId);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -1155,6 +1245,8 @@ public class EcometRouter {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -1180,8 +1272,8 @@ public class EcometRouter {
           }
           switch (schemeField.id) {
             case 1: // APP_ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.AppId = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.AppId = iprot.readI32();
                 struct.setAppIdIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -1202,11 +1294,9 @@ public class EcometRouter {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.AppId != null) {
-          oprot.writeFieldBegin(APP_ID_FIELD_DESC);
-          oprot.writeString(struct.AppId);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(APP_ID_FIELD_DESC);
+        oprot.writeI32(struct.AppId);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1230,7 +1320,7 @@ public class EcometRouter {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetAppId()) {
-          oprot.writeString(struct.AppId);
+          oprot.writeI32(struct.AppId);
         }
       }
 
@@ -1239,7 +1329,7 @@ public class EcometRouter {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.AppId = iprot.readString();
+          struct.AppId = iprot.readI32();
           struct.setAppIdIsSet(true);
         }
       }
@@ -1250,7 +1340,7 @@ public class EcometRouter {
   public static class get_online_count_result implements org.apache.thrift.TBase<get_online_count_result, get_online_count_result._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_online_count_result");
 
-    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.I32, (short)0);
+    private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.I64, (short)0);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1258,7 +1348,7 @@ public class EcometRouter {
       schemes.put(TupleScheme.class, new get_online_count_resultTupleSchemeFactory());
     }
 
-    public int success; // required
+    public long success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1325,7 +1415,7 @@ public class EcometRouter {
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_online_count_result.class, metaDataMap);
     }
@@ -1334,7 +1424,7 @@ public class EcometRouter {
     }
 
     public get_online_count_result(
-      int success)
+      long success)
     {
       this();
       this.success = success;
@@ -1359,11 +1449,11 @@ public class EcometRouter {
       this.success = 0;
     }
 
-    public int getSuccess() {
+    public long getSuccess() {
       return this.success;
     }
 
-    public get_online_count_result setSuccess(int success) {
+    public get_online_count_result setSuccess(long success) {
       this.success = success;
       setSuccessIsSet(true);
       return this;
@@ -1388,7 +1478,7 @@ public class EcometRouter {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((Integer)value);
+          setSuccess((Long)value);
         }
         break;
 
@@ -1398,7 +1488,7 @@ public class EcometRouter {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case SUCCESS:
-        return Integer.valueOf(getSuccess());
+        return Long.valueOf(getSuccess());
 
       }
       throw new IllegalStateException();
@@ -1534,8 +1624,8 @@ public class EcometRouter {
           }
           switch (schemeField.id) {
             case 0: // SUCCESS
-              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
-                struct.success = iprot.readI32();
+              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+                struct.success = iprot.readI64();
                 struct.setSuccessIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -1558,7 +1648,7 @@ public class EcometRouter {
         oprot.writeStructBegin(STRUCT_DESC);
         if (struct.isSetSuccess()) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
-          oprot.writeI32(struct.success);
+          oprot.writeI64(struct.success);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -1584,7 +1674,7 @@ public class EcometRouter {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetSuccess()) {
-          oprot.writeI32(struct.success);
+          oprot.writeI64(struct.success);
         }
       }
 
@@ -1593,7 +1683,7 @@ public class EcometRouter {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.success = iprot.readI32();
+          struct.success = iprot.readI64();
           struct.setSuccessIsSet(true);
         }
       }
@@ -1604,7 +1694,7 @@ public class EcometRouter {
   public static class get_online_ids_args implements org.apache.thrift.TBase<get_online_ids_args, get_online_ids_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_online_ids_args");
 
-    private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("AppId", org.apache.thrift.protocol.TType.STRING, (short)1);
+    private static final org.apache.thrift.protocol.TField APP_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("AppId", org.apache.thrift.protocol.TType.I32, (short)1);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -1612,7 +1702,7 @@ public class EcometRouter {
       schemes.put(TupleScheme.class, new get_online_ids_argsTupleSchemeFactory());
     }
 
-    public String AppId; // required
+    public int AppId; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -1673,11 +1763,13 @@ public class EcometRouter {
     }
 
     // isset id assignments
+    private static final int __APPID_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.APP_ID, new org.apache.thrift.meta_data.FieldMetaData("AppId", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_online_ids_args.class, metaDataMap);
     }
@@ -1686,19 +1778,19 @@ public class EcometRouter {
     }
 
     public get_online_ids_args(
-      String AppId)
+      int AppId)
     {
       this();
       this.AppId = AppId;
+      setAppIdIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public get_online_ids_args(get_online_ids_args other) {
-      if (other.isSetAppId()) {
-        this.AppId = other.AppId;
-      }
+      __isset_bitfield = other.__isset_bitfield;
+      this.AppId = other.AppId;
     }
 
     public get_online_ids_args deepCopy() {
@@ -1707,31 +1799,31 @@ public class EcometRouter {
 
     @Override
     public void clear() {
-      this.AppId = null;
+      setAppIdIsSet(false);
+      this.AppId = 0;
     }
 
-    public String getAppId() {
+    public int getAppId() {
       return this.AppId;
     }
 
-    public get_online_ids_args setAppId(String AppId) {
+    public get_online_ids_args setAppId(int AppId) {
       this.AppId = AppId;
+      setAppIdIsSet(true);
       return this;
     }
 
     public void unsetAppId() {
-      this.AppId = null;
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __APPID_ISSET_ID);
     }
 
     /** Returns true if field AppId is set (has been assigned a value) and false otherwise */
     public boolean isSetAppId() {
-      return this.AppId != null;
+      return EncodingUtils.testBit(__isset_bitfield, __APPID_ISSET_ID);
     }
 
     public void setAppIdIsSet(boolean value) {
-      if (!value) {
-        this.AppId = null;
-      }
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __APPID_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
@@ -1740,7 +1832,7 @@ public class EcometRouter {
         if (value == null) {
           unsetAppId();
         } else {
-          setAppId((String)value);
+          setAppId((Integer)value);
         }
         break;
 
@@ -1750,7 +1842,7 @@ public class EcometRouter {
     public Object getFieldValue(_Fields field) {
       switch (field) {
       case APP_ID:
-        return getAppId();
+        return Integer.valueOf(getAppId());
 
       }
       throw new IllegalStateException();
@@ -1782,12 +1874,12 @@ public class EcometRouter {
       if (that == null)
         return false;
 
-      boolean this_present_AppId = true && this.isSetAppId();
-      boolean that_present_AppId = true && that.isSetAppId();
+      boolean this_present_AppId = true;
+      boolean that_present_AppId = true;
       if (this_present_AppId || that_present_AppId) {
         if (!(this_present_AppId && that_present_AppId))
           return false;
-        if (!this.AppId.equals(that.AppId))
+        if (this.AppId != that.AppId)
           return false;
       }
 
@@ -1838,11 +1930,7 @@ public class EcometRouter {
       boolean first = true;
 
       sb.append("AppId:");
-      if (this.AppId == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.AppId);
-      }
+      sb.append(this.AppId);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -1863,6 +1951,8 @@ public class EcometRouter {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -1888,8 +1978,8 @@ public class EcometRouter {
           }
           switch (schemeField.id) {
             case 1: // APP_ID
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.AppId = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.AppId = iprot.readI32();
                 struct.setAppIdIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -1910,11 +2000,9 @@ public class EcometRouter {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.AppId != null) {
-          oprot.writeFieldBegin(APP_ID_FIELD_DESC);
-          oprot.writeString(struct.AppId);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(APP_ID_FIELD_DESC);
+        oprot.writeI32(struct.AppId);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -1938,7 +2026,7 @@ public class EcometRouter {
         }
         oprot.writeBitSet(optionals, 1);
         if (struct.isSetAppId()) {
-          oprot.writeString(struct.AppId);
+          oprot.writeI32(struct.AppId);
         }
       }
 
@@ -1947,7 +2035,7 @@ public class EcometRouter {
         TTupleProtocol iprot = (TTupleProtocol) prot;
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
-          struct.AppId = iprot.readString();
+          struct.AppId = iprot.readI32();
           struct.setAppIdIsSet(true);
         }
       }
@@ -1966,7 +2054,7 @@ public class EcometRouter {
       schemes.put(TupleScheme.class, new get_online_ids_resultTupleSchemeFactory());
     }
 
-    public List<String> success; // required
+    public List<Long> success; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -2032,7 +2120,7 @@ public class EcometRouter {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64))));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_online_ids_result.class, metaDataMap);
     }
@@ -2041,7 +2129,7 @@ public class EcometRouter {
     }
 
     public get_online_ids_result(
-      List<String> success)
+      List<Long> success)
     {
       this();
       this.success = success;
@@ -2052,8 +2140,8 @@ public class EcometRouter {
      */
     public get_online_ids_result(get_online_ids_result other) {
       if (other.isSetSuccess()) {
-        List<String> __this__success = new ArrayList<String>();
-        for (String other_element : other.success) {
+        List<Long> __this__success = new ArrayList<Long>();
+        for (Long other_element : other.success) {
           __this__success.add(other_element);
         }
         this.success = __this__success;
@@ -2073,22 +2161,22 @@ public class EcometRouter {
       return (this.success == null) ? 0 : this.success.size();
     }
 
-    public java.util.Iterator<String> getSuccessIterator() {
+    public java.util.Iterator<Long> getSuccessIterator() {
       return (this.success == null) ? null : this.success.iterator();
     }
 
-    public void addToSuccess(String elem) {
+    public void addToSuccess(long elem) {
       if (this.success == null) {
-        this.success = new ArrayList<String>();
+        this.success = new ArrayList<Long>();
       }
       this.success.add(elem);
     }
 
-    public List<String> getSuccess() {
+    public List<Long> getSuccess() {
       return this.success;
     }
 
-    public get_online_ids_result setSuccess(List<String> success) {
+    public get_online_ids_result setSuccess(List<Long> success) {
       this.success = success;
       return this;
     }
@@ -2114,7 +2202,7 @@ public class EcometRouter {
         if (value == null) {
           unsetSuccess();
         } else {
-          setSuccess((List<String>)value);
+          setSuccess((List<Long>)value);
         }
         break;
 
@@ -2265,11 +2353,11 @@ public class EcometRouter {
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
                   org.apache.thrift.protocol.TList _list0 = iprot.readListBegin();
-                  struct.success = new ArrayList<String>(_list0.size);
+                  struct.success = new ArrayList<Long>(_list0.size);
                   for (int _i1 = 0; _i1 < _list0.size; ++_i1)
                   {
-                    String _elem2; // optional
-                    _elem2 = iprot.readString();
+                    long _elem2; // optional
+                    _elem2 = iprot.readI64();
                     struct.success.add(_elem2);
                   }
                   iprot.readListEnd();
@@ -2297,10 +2385,10 @@ public class EcometRouter {
         if (struct.success != null) {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.success.size()));
-            for (String _iter3 : struct.success)
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.success.size()));
+            for (long _iter3 : struct.success)
             {
-              oprot.writeString(_iter3);
+              oprot.writeI64(_iter3);
             }
             oprot.writeListEnd();
           }
@@ -2331,9 +2419,9 @@ public class EcometRouter {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (String _iter4 : struct.success)
+            for (long _iter4 : struct.success)
             {
-              oprot.writeString(_iter4);
+              oprot.writeI64(_iter4);
             }
           }
         }
@@ -2345,12 +2433,12 @@ public class EcometRouter {
         BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.success = new ArrayList<String>(_list5.size);
+            org.apache.thrift.protocol.TList _list5 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+            struct.success = new ArrayList<Long>(_list5.size);
             for (int _i6 = 0; _i6 < _list5.size; ++_i6)
             {
-              String _elem7; // optional
-              _elem7 = iprot.readString();
+              long _elem7; // optional
+              _elem7 = iprot.readI64();
               struct.success.add(_elem7);
             }
           }

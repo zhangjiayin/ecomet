@@ -35,17 +35,17 @@ handle_function(Function, Args) when is_atom(Function), is_tuple(Args) ->
 %%%%% HELPER FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 send(Appid, Id, Msg)->
-    gen_server:call(pg2:get_closest_pid(erouter), {send,list_to_integer(binary_to_list(Appid)),binary_to_list(Id),binary_to_list(Msg)}),
+    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,binary_to_list(Msg)}),
     ok.
 send(Appid, Id,Msg,Offline)->
-    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,Msg,Offline}),
+    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,binary_to_list(Msg),Offline}),
     ok.
 
 get_online_count(Appid) ->
-    gen_server:call(pg2:get_closest_pid(erouter), {get_online_count,list_to_integer(binary_to_list(Appid))}).
+    gen_server:call(pg2:get_closest_pid(erouter), {get_online_count,Appid}).
 
 get_online_ids(Appid) ->
-    gen_server:call(pg2:get_closest_pid(erouter), {get_online_ids,list_to_integer(binary_to_list(Appid))}).
+    gen_server:call(pg2:get_closest_pid(erouter), {get_online_ids,Appid}).
 
 get_port() ->
     9999.
