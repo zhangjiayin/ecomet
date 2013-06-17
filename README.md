@@ -13,6 +13,7 @@ TODO
 4. fix lager config
 
 webtools start
+
 webtool:start(".//lib/webtool-0.8.9.2/priv/", [{port, 8889}, {bind_address,
          {0,0,0,0}}]).
 
@@ -20,14 +21,21 @@ webtool:start(".//lib/webtool-0.8.9.2/priv/", [{port, 8889}, {bind_address,
 getting start 
 
 
-1.git clone https://github.com/zhangjiayin/ecomet.git
+1. clone code 
+   
+    git clone https://github.com/zhangjiayin/ecomet.git
 
-2.
-cd ecomet/router
-make
-./rebar generate
-cd rel/ecomet_router/
-./bin/ecomet_router start
+2.make and start router 
+
+ cd ecomet/router
+
+ make
+
+ ./rebar generate
+
+ cd rel/ecomet_router/
+
+ ./bin/ecomet_router start
 
 3.
 cd ../../../web
