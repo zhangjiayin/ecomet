@@ -26,15 +26,10 @@ getting start
     git clone https://github.com/zhangjiayin/ecomet.git
 
 2.make and start router 
-
  cd ecomet/router
-
  make
-
  ./rebar generate
-
  cd rel/ecomet_router/
-
  ./bin/ecomet_router start
 
 3.
