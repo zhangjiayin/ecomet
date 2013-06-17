@@ -110,7 +110,7 @@ $(function(){
            $.each(data["users"],function(index,item){
                online_ids.push(item.id);
                addOnlineUser(item.id, item.name);
-               $(item).find("button").find('font').remove();
+               $('#user_' + item.id).find("button").find('font').remove();
            });
            //TODO UNCOMMET
           setTimeout(getOnlineUsers, 10000);
