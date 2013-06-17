@@ -11,6 +11,8 @@
 %% External exports
 -export([start_link/0, upgrade/0]).
 
+-define(CHILD(I, Type), {I, {I, start_link, []}, permanent, 5000, Type, [I]}).
+
 %% supervisor callbacks
 -export([init/1]).
 
@@ -42,7 +44,7 @@ upgrade() ->
 %% @doc supervisor callback.
 init([]) ->
     Web = web_specs(ecomet_web),
-    Processes = [Web],
+    Processes = [Web, ?CHILD(ecomet_heartbeat, worker) ],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.

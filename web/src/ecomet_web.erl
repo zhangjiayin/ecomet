@@ -120,6 +120,7 @@ resume(Req, Id, Reentry,TimerRef) ->
             ok;
         {timeout, _Pid, Msg} ->
             error_logger:info_msg("Timeout msg ~p~n", [Msg]),
+            erlang:cancel_timer(TimerRef),
             Json=mochijson2:encode({struct, [{type,ping},{msg,list_to_binary(Msg)}]}),
             okJson(Req, Json);
         Msg ->

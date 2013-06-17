@@ -26,5 +26,5 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    Children = [ ?CHILD(ecomet_thrift_server_controller, worker) ],
+    Children = [ ?CHILD(ecomet_thrift_server_controller, worker) , ?CHILD(ecomet_heartbeat, worker)],
     {ok, { {one_for_one, 5, 10}, Children} }.

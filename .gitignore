@@ -38,3 +38,5 @@ thrift_server/deps/lager/
 router/deps/lager/
 
 router/deps/goldrush/
+
+thrift_server/ebin/ecomet_thrift_server.app
