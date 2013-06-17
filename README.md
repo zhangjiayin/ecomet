@@ -22,8 +22,7 @@ getting start
 
 
 1. clone code 
-   
-    git clone https://github.com/zhangjiayin/ecomet.git
+   git clone https://github.com/zhangjiayin/ecomet.git
 
 2.make and start router 
  cd ecomet/router
