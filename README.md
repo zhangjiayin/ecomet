@@ -10,7 +10,7 @@ TODO
 1. fix types Appid  :integer()  Uid: integer()  Msg: json()
 2. distribution router
 3. performance test
-4. add lager
+4. fix lager config
 
 webtools start
 webtool:start(".//lib/webtool-0.8.9.2/priv/", [{port, 8889}, {bind_address,
