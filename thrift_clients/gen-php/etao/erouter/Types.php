@@ -16,4 +16,236 @@ use Thrift\Protocol\TProtocol;
 use Thrift\Exception\TApplicationException;
 
 
+class Message {
+  static $_TSPEC;
+
+  public $appId = null;
+  public $from = null;
+  public $to = null;
+  public $nick = "";
+  public $type = "msg";
+  public $content = null;
+  public $created = 0;
+  public $offline = false;
+  public $expire = 0;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'appId',
+          'type' => TType::I32,
+          ),
+        2 => array(
+          'var' => 'from',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'to',
+          'type' => TType::I64,
+          ),
+        4 => array(
+          'var' => 'nick',
+          'type' => TType::STRING,
+          ),
+        5 => array(
+          'var' => 'type',
+          'type' => TType::STRING,
+          ),
+        6 => array(
+          'var' => 'content',
+          'type' => TType::STRING,
+          ),
+        7 => array(
+          'var' => 'created',
+          'type' => TType::I32,
+          ),
+        8 => array(
+          'var' => 'offline',
+          'type' => TType::BOOL,
+          ),
+        9 => array(
+          'var' => 'expire',
+          'type' => TType::I32,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['appId'])) {
+        $this->appId = $vals['appId'];
+      }
+      if (isset($vals['from'])) {
+        $this->from = $vals['from'];
+      }
+      if (isset($vals['to'])) {
+        $this->to = $vals['to'];
+      }
+      if (isset($vals['nick'])) {
+        $this->nick = $vals['nick'];
+      }
+      if (isset($vals['type'])) {
+        $this->type = $vals['type'];
+      }
+      if (isset($vals['content'])) {
+        $this->content = $vals['content'];
+      }
+      if (isset($vals['created'])) {
+        $this->created = $vals['created'];
+      }
+      if (isset($vals['offline'])) {
+        $this->offline = $vals['offline'];
+      }
+      if (isset($vals['expire'])) {
+        $this->expire = $vals['expire'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'Message';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->appId);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->from);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->to);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->nick);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->type);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->content);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->created);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 8:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->offline);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 9:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->expire);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('Message');
+    if ($this->appId !== null) {
+      $xfer += $output->writeFieldBegin('appId', TType::I32, 1);
+      $xfer += $output->writeI32($this->appId);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->from !== null) {
+      $xfer += $output->writeFieldBegin('from', TType::I64, 2);
+      $xfer += $output->writeI64($this->from);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->to !== null) {
+      $xfer += $output->writeFieldBegin('to', TType::I64, 3);
+      $xfer += $output->writeI64($this->to);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->nick !== null) {
+      $xfer += $output->writeFieldBegin('nick', TType::STRING, 4);
+      $xfer += $output->writeString($this->nick);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->type !== null) {
+      $xfer += $output->writeFieldBegin('type', TType::STRING, 5);
+      $xfer += $output->writeString($this->type);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->content !== null) {
+      $xfer += $output->writeFieldBegin('content', TType::STRING, 6);
+      $xfer += $output->writeString($this->content);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->created !== null) {
+      $xfer += $output->writeFieldBegin('created', TType::I32, 7);
+      $xfer += $output->writeI32($this->created);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->offline !== null) {
+      $xfer += $output->writeFieldBegin('offline', TType::BOOL, 8);
+      $xfer += $output->writeBool($this->offline);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->expire !== null) {
+      $xfer += $output->writeFieldBegin('expire', TType::I32, 9);
+      $xfer += $output->writeI32($this->expire);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 

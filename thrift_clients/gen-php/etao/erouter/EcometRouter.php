@@ -16,7 +16,7 @@ use Thrift\Exception\TApplicationException;
 
 
 interface EcometRouterIf {
-  public function send($AppId, $Id, $Msg, $Offline);
+  public function send(\etao\erouter\Message $Msg);
   public function get_online_count($AppId);
   public function get_online_ids($AppId);
 }
@@ -32,18 +32,15 @@ class EcometRouterClient implements \etao\erouter\EcometRouterIf {
     $this->output_ = $output ? $output : $input;
   }
 
-  public function send($AppId, $Id, $Msg, $Offline)
+  public function send(\etao\erouter\Message $Msg)
   {
-    $this->send_send($AppId, $Id, $Msg, $Offline);
+    $this->send_send($Msg);
   }
 
-  public function send_send($AppId, $Id, $Msg, $Offline)
+  public function send_send(\etao\erouter\Message $Msg)
   {
     $args = new \etao\erouter\EcometRouter_send_args();
-    $args->AppId = $AppId;
-    $args->Id = $Id;
     $args->Msg = $Msg;
-    $args->Offline = $Offline;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -166,44 +163,21 @@ class EcometRouterClient implements \etao\erouter\EcometRouterIf {
 class EcometRouter_send_args {
   static $_TSPEC;
 
-  public $AppId = null;
-  public $Id = null;
   public $Msg = null;
-  public $Offline = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
       self::$_TSPEC = array(
         1 => array(
-          'var' => 'AppId',
-          'type' => TType::I64,
-          ),
-        2 => array(
-          'var' => 'Id',
-          'type' => TType::I64,
-          ),
-        3 => array(
           'var' => 'Msg',
-          'type' => TType::STRING,
-          ),
-        4 => array(
-          'var' => 'Offline',
-          'type' => TType::BOOL,
+          'type' => TType::STRUCT,
+          'class' => '\etao\erouter\Message',
           ),
         );
     }
     if (is_array($vals)) {
-      if (isset($vals['AppId'])) {
-        $this->AppId = $vals['AppId'];
-      }
-      if (isset($vals['Id'])) {
-        $this->Id = $vals['Id'];
-      }
       if (isset($vals['Msg'])) {
         $this->Msg = $vals['Msg'];
-      }
-      if (isset($vals['Offline'])) {
-        $this->Offline = $vals['Offline'];
       }
     }
   }
@@ -228,29 +202,9 @@ class EcometRouter_send_args {
       switch ($fid)
       {
         case 1:
-          if ($ftype == TType::I64) {
-            $xfer += $input->readI64($this->AppId);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 2:
-          if ($ftype == TType::I64) {
-            $xfer += $input->readI64($this->Id);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->Msg);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 4:
-          if ($ftype == TType::BOOL) {
-            $xfer += $input->readBool($this->Offline);
+          if ($ftype == TType::STRUCT) {
+            $this->Msg = new \etao\erouter\Message();
+            $xfer += $this->Msg->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -268,24 +222,12 @@ class EcometRouter_send_args {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('EcometRouter_send_args');
-    if ($this->AppId !== null) {
-      $xfer += $output->writeFieldBegin('AppId', TType::I64, 1);
-      $xfer += $output->writeI64($this->AppId);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->Id !== null) {
-      $xfer += $output->writeFieldBegin('Id', TType::I64, 2);
-      $xfer += $output->writeI64($this->Id);
-      $xfer += $output->writeFieldEnd();
-    }
     if ($this->Msg !== null) {
-      $xfer += $output->writeFieldBegin('Msg', TType::STRING, 3);
-      $xfer += $output->writeString($this->Msg);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->Offline !== null) {
-      $xfer += $output->writeFieldBegin('Offline', TType::BOOL, 4);
-      $xfer += $output->writeBool($this->Offline);
+      if (!is_object($this->Msg)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('Msg', TType::STRUCT, 1);
+      $xfer += $this->Msg->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

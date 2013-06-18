@@ -11,6 +11,7 @@ use Thrift\ClassLoader\ThriftClassLoader;
 
 $GEN_DIR = realpath(dirname(__FILE__).'').'/gen-php';
 require_once __DIR__.'/gen-php/etao/erouter/EcometRouter.php';
+require_once __DIR__.'/gen-php/etao/erouter/Types.php';
 
 $loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/php_lib');
@@ -58,13 +59,22 @@ $a = json_encode( array(
     "msg" => "令小湛" . $i,
     "type" => "auction",
 ) );
-     $client->send(1,'2',$a);
+*/
+  $m = new etao\erouter\Message;
+  $m->appId =  1;
+  $m->from  =  1;
+ $m->to    =  2;
+  $m->nick  =  "测试";
+  $m->content  =  "测试";
+  $m->created  =  time();
+  $client->send($m);
+     /*
   }
   */
-  $list = $client->get_online_ids(1);
-  var_dump( $list );
-  $list = $client->get_online_count(1);
-  var_dump( $list );
+// $list = $client->get_online_ids(1);
+// var_dump( $list );
+// $list = $client->get_online_count(1);
+// var_dump( $list );
 
   $transport->close();
     $socket->close( );

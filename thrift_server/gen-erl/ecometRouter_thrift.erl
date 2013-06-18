@@ -14,12 +14,9 @@
 
 struct_info('i am a dummy struct') -> undefined.
 %%% interface
-% send(This, AppId, Id, Msg, Offline)
+% send(This, Msg)
 function_info('send', params_type) ->
-  {struct, [{1, i64},
-          {2, i64},
-          {3, string},
-          {4, bool}]}
+  {struct, [{1, {struct, {'ecomet_router_types', 'message'}}}]}
 ;
 function_info('send', reply_type) ->
   oneway_void;

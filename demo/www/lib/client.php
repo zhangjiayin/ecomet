@@ -5,6 +5,7 @@ require_once __DIR__.'/../../../thrift_clients/php_lib/Thrift/ClassLoader/Thrift
 use Thrift\ClassLoader\ThriftClassLoader;
 $GEN_DIR = realpath(dirname(__FILE__).'').'/gen-php';
 require_once __DIR__.'/../../../thrift_clients/gen-php/etao/erouter/EcometRouter.php';
+require_once __DIR__.'/../../../thrift_clients/gen-php/etao/erouter/Types.php';
 
 $loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../../thrift_clients/php_lib');
@@ -46,13 +47,16 @@ class Demo_Client {
             $protocol = new TBinaryProtocol($transport);
             $client = new  etao\erouter\EcometRouterClient($protocol);
             $transport->open();
-            $a = json_encode( array(
-                "name"  => $name,
-                "from" =>  $from,
-                "msg" => $msg,
-                "type" => $type,
-            ) );
-           $client->send(1,$to ,$a, true);
+            $m = new etao\erouter\Message;
+            $m->appId =  1;
+            $m->from  =  $from;
+            $m->to    =  $to;
+            $m->nick  =  $name;
+            $m->content  =  $msg;
+            $m->type     =  $type;
+            $m->created  =  time();
+            $m->offline  = true;
+            $client->send($m);
 
             $transport->close();
             $socket->close( );

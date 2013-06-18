@@ -8,9 +8,19 @@
 
 -export([start/0, stop/0, feed/3, loop/3]).
 
--export([resume/4, msg_send/1]).
+-export([resume/4 ]).
 -define(WAITTIME, 30000).
 %% External API
+
+-record(message, {appId :: integer(),
+                  from :: integer(),
+                  to :: integer(),
+                  nick = "" :: string() | binary(),
+                  type = "msg" :: string() | binary(),
+                  content :: string() | binary(),
+                  created = 0 :: integer(),
+                  offline = false :: boolean(),
+                  expire = 0 :: integer()}).
 
 start() ->
     {ok,DocRoot} = application:get_env(docroot),
@@ -65,9 +75,6 @@ loop(Req, DocRoot,Keepalive) ->
                 end;
             'POST' ->
                 case Path of
-                    "send/" ++ _T -> 
-                        msg_send(Req),
-                        ok(Req,"ok");
                     "longpoll/" ++ Appid   ->
                         Args = Req:parse_post(),
                         Id  = proplists:get_value("uid", Args, ""),
@@ -94,11 +101,11 @@ loop(Req, DocRoot,Keepalive) ->
     end.
 
 %% Internal API
-feed(Response,Id,N) ->
+feed(Response,Id,_N) ->
     receive
     {router_msg, Msg} ->
-        Html = io_lib:format("Recvd msg #~w: '~s'", [N, Msg]),
-        Response:write_chunk(Html);
+        J={struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]},
+        Response:write_chunk(mochijson2:encode(J));
     Msg1 ->
         error_logger:info_msg("Msg1 ~w",[Msg1]),
         ok
@@ -113,7 +120,8 @@ resume(Req, Id, Reentry,TimerRef) ->
         {router_msg, Msg} ->
             erlang:cancel_timer(TimerRef),
             error_logger:info_msg("router_msg Msg  ~p~n", [Msg]),
-            okJson(Req, Msg);
+            J={struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]},
+            okJson(Req, mochijson2:encode(J));
         {'EXIT',Pid,noconnection} ->
             error_logger:info_msg("EXIT ~p~n", [Pid]),
             rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,Id,self(),true]),
@@ -133,15 +141,6 @@ resume(Req, Id, Reentry,TimerRef) ->
 
     error_logger:info_msg("reentering loop via continuation in ~p~n", [Req:get(path)]),
     Reentry(Req).
-
-msg_send(Req) ->
-    Args = Req:parse_post(),
-    F = proplists:get_value("from", Args, "ana"),
-    T = proplists:get_value("to", Args, "to"),
-    M = proplists:get_value("msg", Args , "nothing"),
-
-    Json=mochijson2:encode({struct, [{type,msg},{from,list_to_binary(F)}, {to, list_to_binary(T)},{msg,list_to_binary(M)}]}),
-    rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, send,[1,T,Json]).
 
 okJson(Req,Response) ->
     Req:ok({_ContentType = "application/json",

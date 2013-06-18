@@ -76,13 +76,13 @@ $(function(){
             dataType: "json",
             success: function(ret){ 
                 if(typeof(ret.type) =="undefined" || ret.type == "msg")  {
-                    initChatTab(ret.name,ret.from);
-                    var title = ret.name + "说: ";
-                    addchatMsg(ret.from, title, ret.msg, 1);
+                    initChatTab(ret.nick,ret.from);
+                    var title = ret.nick + "说: ";
+                    addchatMsg(ret.from, title, ret.content, 1);
                 }  else if(ret.type == "broadcast") {
                     initChatTab('所有人','broadcast');
-                    var title = ret.name + "说: ";
-                    addchatMsg(ret.type, title, ret.msg, 1);
+                    var title = ret.nick + "说: ";
+                    addchatMsg(ret.type, title, ret.content, 1);
                 }
                 retry_time = retry_time / 2;
                 if(retry_time < 1) {

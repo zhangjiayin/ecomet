@@ -10,7 +10,31 @@
 
 -export([struct_info/1, struct_info_ext/1]).
 
+struct_info('message') ->
+  {struct, [{1, i32},
+          {2, i64},
+          {3, i64},
+          {4, string},
+          {5, string},
+          {6, string},
+          {7, i32},
+          {8, bool},
+          {9, i32}]}
+;
+
 struct_info('i am a dummy struct') -> undefined.
+
+struct_info_ext('message') ->
+  {struct, [{1, undefined, i32, 'appId', undefined},
+          {2, undefined, i64, 'from', undefined},
+          {3, undefined, i64, 'to', undefined},
+          {4, undefined, string, 'nick', ""},
+          {5, undefined, string, 'type', "msg"},
+          {6, undefined, string, 'content', undefined},
+          {7, undefined, i32, 'created', 0},
+          {8, undefined, bool, 'offline', false},
+          {9, undefined, i32, 'expire', 0}]}
+;
 
 struct_info_ext('i am a dummy struct') -> undefined.
 
