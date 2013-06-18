@@ -52,7 +52,6 @@ try {
   $transport->open();
     /**
   for( $i=0;$i<1;$i++ ) {
-     */
  $i =0;
 $a = json_encode( array(
     "from" =>  "系统消息",
@@ -60,7 +59,6 @@ $a = json_encode( array(
     "type" => "auction",
 ) );
      $client->send(1,'2',$a);
-  /*
   }
   */
   $list = $client->get_online_ids(1);

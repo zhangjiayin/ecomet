@@ -51,7 +51,7 @@ loop(Req, DocRoot,Keepalive) ->
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id     ->
 
-                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,Id,self(),true]),
+                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,list_to_integer(Id),self(),true]),
                         TimerRef = erlang:start_timer(?WAITTIME,self(), "ping"),
                         Reentry = mochiweb_http:reentry({?MODULE, loop,[DocRoot,keepalive]}),
 
