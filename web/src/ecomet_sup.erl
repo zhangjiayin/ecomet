@@ -44,7 +44,7 @@ upgrade() ->
 %% @doc supervisor callback.
 init([]) ->
     Web = web_specs(ecomet_web),
-    Processes = [Web, ?CHILD(ecomet_heartbeat, worker) ],
+    Processes = [Web, ?CHILD(ecomet_heartbeat_web, worker) ],
     Strategy = {one_for_one, 10, 10},
     {ok,
      {Strategy, lists:flatten(Processes)}}.

@@ -1,4 +1,4 @@
--module(ecomet_heartbeat).
+-module(ecomet_heartbeat_web).
 
 %% erlang heart module is usefull
 
