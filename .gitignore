@@ -2,3 +2,9 @@
 
 *.beam
 deps
+target
+*.swp
+
+*.log
+
+*.DAT

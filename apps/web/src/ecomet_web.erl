@@ -11,17 +11,6 @@
 -export([resume/4 ]).
 -define(WAITTIME, 30000).
 -include("../../shared_module/src/ecomet_router_types.hrl").
-%% External API
-
-%%-record(message, {appId :: integer(),
-%%                 from :: integer(),
-%%                 to :: integer(),
-%%                 nick = "" :: string() | binary(),
-%%                 type = "msg" :: string() | binary(),
-%%                 content :: string() | binary(),
-%%                 created = 0 :: integer(),
-%%                 offline = false :: boolean(),
-%%                 expire = 0 :: integer()}).
 
 start() ->
     {ok,DocRoot} = application:get_env(docroot),
@@ -46,19 +35,12 @@ loop(Req, DocRoot,Keepalive) ->
         case Req:get(method) of
             Method when Method =:= 'GET'; Method =:= 'HEAD' ->
                 case Path of
-                    "get_online_ids/" ++ _Id ->
-                        Ids = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_ids,[1]),
-                        IdCount = rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, get_online_count,[1]),
-                        Json=mochijson2:encode({struct, [{ids,  [ Iid  ||Iid <-Ids]}, {count,IdCount }]}),
-                        okJson(Req,Json),
-                        Reentry = mochiweb_http:reentry({?MODULE, loop,[DocRoot,keepalive]}),
-                        Reentry(Req);
                     "ecomet/" ++ Id ->
                         Response = Req:ok({"text/html; charset=utf-8",
                                 [{"Server","ECOMET"}],
                                 chunked}),
                         erlang:send_after(?WAITTIME, self(), "ping"),
-                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1, Id,self(),true]),
+                        rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1, list_to_integer(Id),self(),true]),
                         proc_lib:hibernate(?MODULE, feed, [Response, Id, 1]);
                     "longpoll/" ++ Id     ->
 
@@ -67,8 +49,8 @@ loop(Req, DocRoot,Keepalive) ->
                         Reentry = mochiweb_http:reentry({?MODULE, loop,[DocRoot,keepalive]}),
 
                         proc_lib:hibernate(?MODULE, resume, [Req,Id, Reentry, TimerRef]);
-                    "heathy/"           ->
-                        Json=mochijson2:encode(heathy()),
+                    "healthy/"           ->
+                        Json=mochijson2:encode(healthy()),
                         okJson(Req, Json);
                     _ ->
                         error_logger:info_msg("DocRoot ~p\n", [DocRoot]),
@@ -105,8 +87,12 @@ loop(Req, DocRoot,Keepalive) ->
 feed(Response,Id,_N) ->
     receive
     {router_msg, Msg} ->
-        J={struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]},
+        J=[{struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]}],
         Response:write_chunk(mochijson2:encode(J));
+    {router_msgs, Msgs} -> 
+        error_logger:info_msg("router_msgs Msgs  ~p~n", [Msgs]),
+        J=[{struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]} || Msg <-Msgs],
+        Response:write_chunk( mochijson2:encode(J));
     Msg1 ->
         error_logger:info_msg("Msg1 ~w",[Msg1]),
         ok
@@ -121,22 +107,27 @@ resume(Req, Id, Reentry,TimerRef) ->
         {router_msg, Msg} ->
             erlang:cancel_timer(TimerRef),
             error_logger:info_msg("router_msg Msg  ~p~n", [Msg]),
-            J={struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]},
+            J=[{struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]}],
             okJson(Req, mochijson2:encode(J));
-        {'EXIT',Pid,noconnection} ->
+        {router_msgs, Msgs} -> 
+            erlang:cancel_timer(TimerRef),
+            error_logger:info_msg("router_msgs Msgs  ~p~n", [Msgs]),
+            J=[{struct, [{appid, Msg#message.appId},{nick, Msg#message.nick},{type,Msg#message.type},{content,Msg#message.content},{from, Msg#message.from},{to, Msg#message.to}, {created,Msg#message.created}]} || Msg <-Msgs],
+            okJson(Req, mochijson2:encode(J));
+        {'EXIT',Pid,_} ->
             error_logger:info_msg("EXIT ~p~n", [Pid]),
-            rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,Id,self(),true]),
+            rpc:call(node(pg2:get_closest_pid(erouter)),ecomet_router, login,[1,1,list_to_integer(Id),self(),true]),
             ok;
         {timeout, _Pid, Msg} ->
             error_logger:info_msg("Timeout msg ~p~n", [Msg]),
             erlang:cancel_timer(TimerRef),
-            Json=mochijson2:encode({struct, [{type,ping},{msg,list_to_binary(Msg)}]}),
+            Json=mochijson2:encode([{struct, [{type,ping},{msg,list_to_binary(Msg)}]}]),
             okJson(Req, Json);
         Msg ->
             error_logger:info_msg("uncatch msg ~p~n", [Msg]),
             erlang:cancel_timer(TimerRef),
             Text = iolib:format("~w", [Msg]),
-            Json=mochijson2:encode({struct, [{type,ping},{msg,Text}]}),
+            Json=mochijson2:encode([{struct, [{type,ping},{msg,Text}]}]),
             ok(Req, Json)
     end,
 
@@ -154,7 +145,7 @@ ok(Req, Response) ->
             _Headers = [],
             Response}).
 
-heathy () ->
+healthy () ->
     [
         {process_count,erlang:system_info(process_count)},
         {cpu,erlang:system_info(cpu_topology)},

@@ -6,7 +6,7 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
         terminate/2, code_change/3, first_run/0, sync_db/1]).
 
--export([send/3,send/4,publish/3,publish/4,login/4,login/5, logout/1, get_online_count/1, get_online_ids/1]).
+-export([sends/4, send/3,send/4,publish/3,publish/4,login/4,login/5, logout/1, get_online_count/1, get_online_ids/1]).
 
 -define(SERVER, ?MODULE).
 
@@ -69,8 +69,12 @@ get_online_count(Appid) ->
 get_online_ids(Appid) ->
     gen_server:call(?MODULE, {get_online_ids,Appid}).
 
+sends(Appid,Id, Msgs,Offline) -> 
+    gen_server:call(?MODULE, {sends, Appid, Id, Msgs,Offline}).
+
 send(Appid, Id, Msg) ->
     gen_server:call(?MODULE, {send, Appid, Id, Msg}).
+
 send(Appid, Id, Msg,Offline) ->
     gen_server:call(?MODULE, {send, Appid, Id, Msg, Offline}).
 
@@ -119,23 +123,41 @@ login_call(Appid, Type, Uid, Pid,Offline) when is_pid(Pid) ->
                     ok;
                 _->
                     error_logger:info_msg("Msgs ~w~n", Msgs),
-                    [ Pid ! {router_msg, Msg} || Msg <- Msgs ],
+                    %%[ Pid ! {router_msg, Msg} || Msg <- Msgs ],
+                    sends_call(Appid,Uid,Msgs,Offline),
                     ecomet_offline:delete(Appid, Uid),
                     ok
             end;
         _ ->
             ok
     end.
-
-send_call (Appid, Uid,Msg,Offline) ->
+sends_call(Appid, Uid, Msgs, Offline) ->
     Pids = mnesia:dirty_match_object(#onlines{pid='_', appid=Appid,type='_', uid=Uid,ctime='_'}),
     % send Msg to them all
-    M = {router_msg, Msg},
+    M = {router_msgs, Msgs},
     error_logger:info_msg("pids~w~nAppid: ~w Uid, ~w ",[Pids,Appid,Uid]),
     case Pids of
         [] ->
             case Offline of
                 true ->
+                    [ecomet_offline:store(Appid, Uid, Msg) || Msg <- Msgs];
+                _->
+                    ok
+            end,
+            ok;
+        _ ->
+            error_logger:info_msg("~w",[Pids]),
+            [Pid ! M || {onlines,Pid,_,_,_,_} <- Pids]
+    end.
+send_call (Appid, Uid,Msg,Offline) ->
+    Pids = mnesia:dirty_match_object(#onlines{pid='_', appid=Appid,type='_', uid=Uid,ctime='_'}),
+    % send Msg to them all
+    M = {router_msg, Msg},
+    case Pids of
+        [] ->
+            case Offline of
+                true ->
+                    error_logger:info_msg("store msg ~p",[Msg]),
                     ecomet_offline:store(Appid, Uid, Msg);
                 _->
                     ok
@@ -195,11 +217,18 @@ handle_call({publish, Appid, Id, Msg}, From, State) ->
 handle_call({send, Appid, Id, Msg,Offline}, _From, State) ->
     send_call(Appid, Id,Msg,Offline),
     {reply, ok, State};
-
 handle_call({send, Appid, Id, Msg}, _From, State) ->
     Offline = false,
     send_call(Appid, Id,Msg,Offline),
-    {reply, ok, State}.
+    {reply, ok, State};
+
+handle_call({sends,Appid,Id,Msgs,Offline}, _From, State) ->
+    sends_call(Appid, Id,Msgs,Offline),
+    {reply, ok, State};
+
+handle_call(_,From,Stat)->
+    error_logger:error_msg("Msg, From ~p, State ~p", [From ,Stat]).
+
 
 % handle death and cleanup of logged in processes
 handle_info(Info, State) ->

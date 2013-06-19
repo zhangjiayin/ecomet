@@ -17,6 +17,7 @@ use Thrift\Exception\TApplicationException;
 
 interface EcometRouterIf {
   public function send(\etao\erouter\Message $Msg);
+  public function sends($Appid, $To, $Msg, $Offline);
   public function get_online_count($AppId);
   public function get_online_ids($AppId);
 }
@@ -49,6 +50,31 @@ class EcometRouterClient implements \etao\erouter\EcometRouterIf {
     else
     {
       $this->output_->writeMessageBegin('send', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+  public function sends($Appid, $To, $Msg, $Offline)
+  {
+    $this->send_sends($Appid, $To, $Msg, $Offline);
+  }
+
+  public function send_sends($Appid, $To, $Msg, $Offline)
+  {
+    $args = new \etao\erouter\EcometRouter_sends_args();
+    $args->Appid = $Appid;
+    $args->To = $To;
+    $args->Msg = $Msg;
+    $args->Offline = $Offline;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'sends', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('sends', TMessageType::CALL, $this->seqid_);
       $args->write($this->output_);
       $this->output_->writeMessageEnd();
       $this->output_->getTransport()->flush();
@@ -228,6 +254,166 @@ class EcometRouter_send_args {
       }
       $xfer += $output->writeFieldBegin('Msg', TType::STRUCT, 1);
       $xfer += $this->Msg->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class EcometRouter_sends_args {
+  static $_TSPEC;
+
+  public $Appid = null;
+  public $To = null;
+  public $Msg = null;
+  public $Offline = false;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'Appid',
+          'type' => TType::I32,
+          ),
+        2 => array(
+          'var' => 'To',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'Msg',
+          'type' => TType::LST,
+          'etype' => TType::STRUCT,
+          'elem' => array(
+            'type' => TType::STRUCT,
+            'class' => '\etao\erouter\Message',
+            ),
+          ),
+        4 => array(
+          'var' => 'Offline',
+          'type' => TType::BOOL,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['Appid'])) {
+        $this->Appid = $vals['Appid'];
+      }
+      if (isset($vals['To'])) {
+        $this->To = $vals['To'];
+      }
+      if (isset($vals['Msg'])) {
+        $this->Msg = $vals['Msg'];
+      }
+      if (isset($vals['Offline'])) {
+        $this->Offline = $vals['Offline'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'EcometRouter_sends_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->Appid);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->To);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::LST) {
+            $this->Msg = array();
+            $_size0 = 0;
+            $_etype3 = 0;
+            $xfer += $input->readListBegin($_etype3, $_size0);
+            for ($_i4 = 0; $_i4 < $_size0; ++$_i4)
+            {
+              $elem5 = null;
+              $elem5 = new \etao\erouter\Message();
+              $xfer += $elem5->read($input);
+              $this->Msg []= $elem5;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->Offline);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('EcometRouter_sends_args');
+    if ($this->Appid !== null) {
+      $xfer += $output->writeFieldBegin('Appid', TType::I32, 1);
+      $xfer += $output->writeI32($this->Appid);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->To !== null) {
+      $xfer += $output->writeFieldBegin('To', TType::I64, 2);
+      $xfer += $output->writeI64($this->To);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->Msg !== null) {
+      if (!is_array($this->Msg)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('Msg', TType::LST, 3);
+      {
+        $output->writeListBegin(TType::STRUCT, count($this->Msg));
+        {
+          foreach ($this->Msg as $iter6)
+          {
+            $xfer += $iter6->write($output);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->Offline !== null) {
+      $xfer += $output->writeFieldBegin('Offline', TType::BOOL, 4);
+      $xfer += $output->writeBool($this->Offline);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -500,14 +686,14 @@ class EcometRouter_get_online_ids_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size0 = 0;
-            $_etype3 = 0;
-            $xfer += $input->readListBegin($_etype3, $_size0);
-            for ($_i4 = 0; $_i4 < $_size0; ++$_i4)
+            $_size7 = 0;
+            $_etype10 = 0;
+            $xfer += $input->readListBegin($_etype10, $_size7);
+            for ($_i11 = 0; $_i11 < $_size7; ++$_i11)
             {
-              $elem5 = null;
-              $xfer += $input->readI64($elem5);
-              $this->success []= $elem5;
+              $elem12 = null;
+              $xfer += $input->readI64($elem12);
+              $this->success []= $elem12;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -535,9 +721,9 @@ class EcometRouter_get_online_ids_result {
       {
         $output->writeListBegin(TType::I64, count($this->success));
         {
-          foreach ($this->success as $iter6)
+          foreach ($this->success as $iter13)
           {
-            $xfer += $output->writeI64($iter6);
+            $xfer += $output->writeI64($iter13);
           }
         }
         $output->writeListEnd();

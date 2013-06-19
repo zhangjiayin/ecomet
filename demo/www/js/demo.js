@@ -74,19 +74,23 @@ $(function(){
             url: "http://demo:8080/longpoll/1?" + new Date(),
             data: {uid:uid},
             dataType: "json",
-            success: function(ret){ 
-                if(typeof(ret.type) =="undefined" || ret.type == "msg")  {
-                    initChatTab(ret.nick,ret.from);
-                    var title = ret.nick + "说: ";
-                    addchatMsg(ret.from, title, ret.content, 1);
-                }  else if(ret.type == "broadcast") {
-                    initChatTab('所有人','broadcast');
-                    var title = ret.nick + "说: ";
-                    addchatMsg(ret.type, title, ret.content, 1);
-                }
-                retry_time = retry_time / 2;
-                if(retry_time < 1) {
-                    retry_time = 1;
+            success: function(retData){ 
+                if($.isArray(retData)) {
+                    $.each(retData,function(index,ret){
+                    if(typeof(ret.type) =="undefined" || ret.type == "msg")  {
+                        initChatTab(ret.nick,ret.from);
+                        var title = ret.nick + "说: ";
+                        addchatMsg(ret.from, title, ret.content, 1);
+                    }  else if(ret.type == "broadcast") {
+                        initChatTab('所有人','broadcast');
+                        var title = ret.nick + "说: ";
+                        addchatMsg(ret.type, title, ret.content, 1);
+                    }
+                    retry_time = retry_time / 2;
+                    if(retry_time < 1) {
+                        retry_time = 1;
+                    }
+                    });
                 }
                 setTimeout(longPoll, 1);
             },

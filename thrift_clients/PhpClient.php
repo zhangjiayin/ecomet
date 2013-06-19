@@ -65,9 +65,21 @@ $a = json_encode( array(
   $m->from  =  1;
  $m->to    =  2;
   $m->nick  =  "测试";
-  $m->content  =  "测试";
+  $m->content  =  "测试1";
   $m->created  =  time();
-  $client->send($m);
+
+  $m1 = new etao\erouter\Message;
+  $m1->appId =  1;
+  $m1->from  =  1;
+  $m1->to    =  2;
+  $m1->nick  =  "测试";
+  $m1->content  =  "测试";
+  $m1->created  =  time();
+
+
+  //$client->send($m);
+  //$client->send($m);
+  $client->sends(1,2,array( $m1, $m), true);
      /*
   }
   */

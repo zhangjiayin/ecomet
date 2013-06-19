@@ -23,6 +23,18 @@ function_info('send', reply_type) ->
 function_info('send', exceptions) ->
   {struct, []}
 ;
+% sends(This, Appid, To, Msg, Offline)
+function_info('sends', params_type) ->
+  {struct, [{1, i32},
+          {2, i64},
+          {3, {list, {struct, {'ecomet_router_types', 'message'}}}},
+          {4, bool}]}
+;
+function_info('sends', reply_type) ->
+  oneway_void;
+function_info('sends', exceptions) ->
+  {struct, []}
+;
 % get_online_count(This, AppId)
 function_info('get_online_count', params_type) ->
   {struct, [{1, i32}]}

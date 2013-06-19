@@ -5,7 +5,7 @@
 
 -export([start_link/0, stop/1,start/0,
          handle_function/2,
-         send/1,send/4, send/3,
+         send/1,sends/4,
          get_online_count/1, get_online_ids/1,
          handle_error/2
 % Thrift implementations
@@ -37,21 +37,19 @@ handle_function(Function, Args) when is_atom(Function), is_tuple(Args) ->
 send (Message) ->
     {Appid, To, Offline,Expire } = {Message#message.appId, Message#message.to, Message#message.offline,Message#message.expire},
     io:format("==============~p,~p,~p,~p,~p\n", [Appid,To,Offline,Expire,Message]),
-    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,To,Message}).
+    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,To,Message,Offline}).
 
-send(Appid, Id, Msg)->
-    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,binary_to_list(Msg)}),
-    
-    ok.
-send(Appid, Id,Msg,Offline)->
-    gen_server:call(pg2:get_closest_pid(erouter), {send,Appid,Id,binary_to_list(Msg),Offline}),
-    ok.
+sends (Appid, To, Messages,Offline) ->
+    io:format("==============~p,~p,~p,~p\n", [Appid,To,Offline,Messages]),
+    gen_server:call(pg2:get_closest_pid(erouter), {sends,Appid,To,Messages,Offline}).
 
 get_online_count(Appid) ->
     gen_server:call(pg2:get_closest_pid(erouter), {get_online_count,Appid}).
 
 get_online_ids(Appid) ->
-    gen_server:call(pg2:get_closest_pid(erouter), {get_online_ids,Appid}).
+    A =gen_server:call(pg2:get_closest_pid(erouter), {get_online_ids,Appid}),
+    io:format("==============\n~p\n===========\n", [A]),
+    A.
 
 get_port() ->
     9999.
