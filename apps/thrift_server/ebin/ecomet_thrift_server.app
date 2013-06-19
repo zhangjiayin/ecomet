@@ -1,0 +1,10 @@
+{application,ecomet_thrift_server,
+             [{description,[]},
+              {vsn,"1"},
+              {registered,[]},
+              {applications,[kernel,stdlib]},
+              {mod,{ecomet_thrift_server_app,[]}},
+              {env,[]},
+              {modules,[ecomet_thrift_server,ecomet_thrift_server_app,
+                        ecomet_thrift_server_controller,
+                        ecomet_thrift_server_sup]}]}.

@@ -1,1 +1,0 @@
-./rebar create-app appid=ecomet_thrift_server

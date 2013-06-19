@@ -1,0 +1,10 @@
+{application, shared_module,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [ ]},
+  {modules, [ecomet_heartbeat,ecometRouter_thrift,ecomet_router_types]},
+ %% {mod, { shared_module_app, []}},
+  {env, []}
+ ]}.
